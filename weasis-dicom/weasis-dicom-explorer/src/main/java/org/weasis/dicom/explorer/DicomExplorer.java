@@ -40,25 +40,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
-import javax.swing.Action;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.JToggleButton;
-import javax.swing.JViewport;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
@@ -96,6 +78,7 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.dicom.explorer.google.GoogleCloudDicomStoreFetcher;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 import bibliothek.gui.dock.common.CLocation;
@@ -768,18 +751,30 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             panel.setLayout(gridBagLayout);
             panel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
+            final JTextField datastoreTextField = new JTextField("projects/gcp-health/locations/us-central1/datasets/mydataset/dicomStores/mydicomstore");
+            final GridBagConstraints constMy = new GridBagConstraints();
+            constMy.insets = new Insets(0, 0, 5, 5);
+            constMy.gridx = 0;
+            constMy.gridy = 0;
+            constMy.gridwidth = 2;
+            constMy.fill = GridBagConstraints.HORIZONTAL;
+            constMy.weightx = 1.0;
+            panel.add(datastoreTextField, constMy);
+
+            datastoreTextField.addActionListener(new GoogleCloudDicomStoreFetcher(model));
+
             final JLabel label = new JLabel(PATIENT_ICON);
             final GridBagConstraints gridBagConstraints = new GridBagConstraints();
             gridBagConstraints.insets = new Insets(0, 0, 5, 5);
             gridBagConstraints.gridx = 0;
-            gridBagConstraints.gridy = 0;
+            gridBagConstraints.gridy = 1;
             panel.add(label, gridBagConstraints);
 
             final GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
             gridBagConstraints1.insets = new Insets(0, 2, 5, 0);
             gridBagConstraints1.anchor = GridBagConstraints.WEST;
             gridBagConstraints1.weightx = 1.0;
-            gridBagConstraints1.gridy = 0;
+            gridBagConstraints1.gridy = 1;
             gridBagConstraints1.gridx = 1;
             panel.add(patientCombobox, gridBagConstraints1);
             patientCombobox.setMaximumRowCount(15);
@@ -794,7 +789,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             gridBagConstraints3.anchor = GridBagConstraints.WEST;
             gridBagConstraints3.insets = new Insets(2, 2, 5, 0);
             gridBagConstraints3.gridx = 1;
-            gridBagConstraints3.gridy = 1;
+            gridBagConstraints3.gridy = 2;
 
             panel.add(studyCombobox, gridBagConstraints3);
             studyCombobox.setMaximumRowCount(15);
@@ -812,7 +807,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             gridBagConstraints4.anchor = GridBagConstraints.WEST;
             gridBagConstraints4.insets = new Insets(2, 2, 5, 0);
             gridBagConstraints4.gridx = 1;
-            gridBagConstraints4.gridy = 2;
+            gridBagConstraints4.gridy = 3;
 
             panel.add(koOpen, gridBagConstraints4);
             koOpen.addActionListener(e -> {
@@ -854,7 +849,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 GridBagConstraints gbcbtnMoreOptions = new GridBagConstraints();
                 gbcbtnMoreOptions.anchor = GridBagConstraints.EAST;
                 gbcbtnMoreOptions.gridx = 1;
-                gbcbtnMoreOptions.gridy = 3;
+                gbcbtnMoreOptions.gridy = 4;
                 btnMoreOptions.setFont(FontTools.getFont10());
                 btnMoreOptions.addActionListener(e -> {
                     if (btnMoreOptions.isSelected()) {

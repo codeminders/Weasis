@@ -5,6 +5,9 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.StringTokenizer;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
@@ -12,6 +15,10 @@ import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -23,6 +30,9 @@ import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.oauth2.Oauth2;
 import com.google.api.services.oauth2.model.Tokeninfo;
 import com.google.api.services.oauth2.model.Userinfoplus;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 public class GoogleAPIClient {
 	/**
@@ -49,9 +59,10 @@ public class GoogleAPIClient {
 	
 	/** OAuth 2.0 scopes. */
 	private static final List<String> SCOPES = Arrays.asList(
+			"https://www.googleapis.com/auth/cloud-healthcare",
+			"https://www.googleapis.com/auth/cloud-platform",
 			"https://www.googleapis.com/auth/userinfo.profile", 
-			"https://www.googleapis.com/auth/userinfo.email",
-			"https://www.googleapis.com/auth/cloud-platform");
+			"https://www.googleapis.com/auth/userinfo.email");
 
 	private static Oauth2 oauth2;
 	private static GoogleClientSecrets clientSecrets;
@@ -60,6 +71,7 @@ public class GoogleAPIClient {
 	private static CloudResourceManager cloudResourceManager;
 
 	private boolean isSignedIn = false;
+	private String accessToken;
 	
 	protected GoogleAPIClient() {
 	}
@@ -83,21 +95,36 @@ public class GoogleAPIClient {
 
 	public void signIn() throws Exception{
 		if (!isSignedIn) {
-			httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-			dataStoreFactory = new FileDataStoreFactory(DATA_STORE_DIR);
-			// authorization
-			Credential credential = authorize();
-			// set up global Oauth2 instance
-			oauth2 = new Oauth2.Builder(httpTransport, JSON_FACTORY, credential).setApplicationName(APPLICATION_NAME)
-					.build();
-			
-			cloudResourceManager = new CloudResourceManager.Builder(httpTransport, JSON_FACTORY, credential)
-					.build();
-			
-			// run commands
-			tokenInfo(credential.getAccessToken());
-			userInfo();
-			isSignedIn = true;
+			int tryCount = 0;
+			Exception error;
+			do {
+				try {
+					tryCount++;
+					httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+					dataStoreFactory = new FileDataStoreFactory(DATA_STORE_DIR);
+					// authorization
+					Credential credential = authorize();
+					// set up global Oauth2 instance
+					oauth2 = new Oauth2.Builder(httpTransport, JSON_FACTORY, credential).setApplicationName(APPLICATION_NAME)
+							.build();
+					
+					cloudResourceManager = new CloudResourceManager.Builder(httpTransport, JSON_FACTORY, credential)
+							.build();
+					accessToken = credential.getAccessToken();					
+					// run commands
+					tokenInfo(accessToken);
+					userInfo();
+					error = null;
+					isSignedIn = true;
+				} catch(Exception e) {
+					error = e;
+					e.printStackTrace();
+					System.out.println("Retry authorization:");
+				}
+				} while (!isSignedIn && tryCount < 4);
+			if (error != null) {
+				throw error;
+			}
 		}
 	}
 
@@ -116,9 +143,9 @@ public class GoogleAPIClient {
 		System.out.println(userinfo.toString());
 	}
 	
-	public List<String> fetchProjects() throws Exception {
+	public List<ProjectDescriptor> fetchProjects() throws Exception {
 		signIn();
-		List<String> result = new ArrayList<String>();
+		List<ProjectDescriptor> result = new ArrayList<ProjectDescriptor>();
 		CloudResourceManager.Projects.List request = cloudResourceManager.projects().list();
 	    ListProjectsResponse response;
 	    do {
@@ -127,10 +154,64 @@ public class GoogleAPIClient {
 	        continue;
 	      }
 	      for (Project project : response.getProjects()) {
-	        result.add(project.getName());
+	        result.add(new ProjectDescriptor(project.getName(), project.getProjectId()));
 	      }
 	      request.setPageToken(response.getNextPageToken());
 	    } while (response.getNextPageToken() != null);
+	    return result;
+	}
+	
+	private String parseName(String name) {
+		return name.substring(name.lastIndexOf("/") + 1);
+	}
+	
+	private HttpResponse googleRequest(String url) throws Exception {
+		signIn();
+		HttpRequest request = httpTransport.createRequestFactory().buildGetRequest(new GenericUrl(url));
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.set("Authorization", Arrays.asList(new String[] {"Bearer " + accessToken}));
+	    request.setHeaders(headers);
+		return request.execute();
+	}
+	
+	public List<Location> fetchLocations(String projectId) throws Exception {
+		signIn();
+		String url = "https://healthcare.googleapis.com/v1alpha/projects/"+projectId+"/locations";
+		String data = googleRequest(url).parseAsString();
+		JsonParser parser = new JsonParser();
+		JsonElement jsonTree = parser.parse(data);
+	    JsonArray jsonObject = jsonTree.getAsJsonObject().get("locations").getAsJsonArray();
+	    List<Location> list = StreamSupport.stream(jsonObject.spliterator(), false)
+		    .map(obj -> obj.getAsJsonObject())
+		    .map(obj -> { return new Location(obj.get("name").getAsString(), obj.get("locationId").getAsString());})
+		    .collect(Collectors.toList());
+	    return list;
+	}
+	
+	public List<String> fetchDatasets(String projectId, String locationId) throws Exception {
+		signIn();
+		String url = "https://healthcare.googleapis.com/v1alpha/projects/"+projectId+"/locations/"+locationId+"/datasets";
+		String data = googleRequest(url).parseAsString();
+		JsonParser parser = new JsonParser();
+		JsonElement jsonTree = parser.parse(data);
+	    JsonArray jsonObject = jsonTree.getAsJsonObject().get("datasets").getAsJsonArray();
+	    return StreamSupport.stream(jsonObject.spliterator(), false)
+		    .map(obj -> obj.getAsJsonObject().get("name").getAsString())
+		    .map(this::parseName)
+		    .collect(Collectors.toList());
+	}
+
+	public List<String> fetchDicomstores(String projectId, String locationId, String dataset) throws Exception {
+		signIn();
+		String url = "https://healthcare.googleapis.com/v1alpha/projects/"+projectId+"/locations/"+locationId+"/datasets/"+dataset+"/dicomStores";
+		String data = googleRequest(url).parseAsString();
+		JsonParser parser = new JsonParser();
+		JsonElement jsonTree = parser.parse(data);
+	    JsonArray jsonObject = jsonTree.getAsJsonObject().get("dicomStores").getAsJsonArray();
+	    List<String> result = StreamSupport.stream(jsonObject.spliterator(), false)
+		    .map(obj -> obj.getAsJsonObject().get("name").getAsString())
+		    .map(this::parseName)
+		    .collect(Collectors.toList());
 	    return result;
 	}
 	

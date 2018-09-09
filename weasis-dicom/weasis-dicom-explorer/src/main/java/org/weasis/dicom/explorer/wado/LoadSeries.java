@@ -79,7 +79,7 @@ import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
 import org.weasis.dicom.explorer.ThumbnailMouseAndKeyAdapter;
-import org.weasis.dicom.explorer.google.GoogleAuthStub;
+import com.codeminders.demo.GoogleAuthStub;
 import org.weasis.dicom.mf.HttpTag;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;

@@ -1,4 +1,4 @@
-package org.weasis.dicom.explorer.google;
+package com.codeminders.demo;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -7,9 +7,14 @@ import java.net.URLConnection;
 
 public class GoogleAuthStub {
 
-    // Stub for google auth token TODO implement auth
+    private static volatile String authToken;
+
     public static String getAuthToken() {
-        return "";
+        return authToken;
+    }
+
+    public static void setAuthToken(String newToken) {
+        authToken = newToken;
     }
 
     public static URLConnection googleApiConnection(String url) {

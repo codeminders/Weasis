@@ -1,5 +1,6 @@
 package org.weasis.dicom.explorer.google;
 
+import com.codeminders.demo.GoogleAuthStub;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -8,8 +9,6 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomURL;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLConnection;
@@ -18,7 +17,7 @@ import java.util.Optional;
 
 import static org.weasis.dicom.explorer.DicomModel.LOADING_EXECUTOR;
 
-public class GoogleCloudDicomStoreFetcher implements ActionListener {
+public class GoogleCloudDicomStoreFetcher {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GoogleCloudDicomStoreFetcher.class);
 
@@ -32,10 +31,7 @@ public class GoogleCloudDicomStoreFetcher implements ActionListener {
         this.dicomExplorer = dicomExplorer;
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        final String relativePath = e.getActionCommand();
-
+    public void run(String relativePath) {
         LOADING_EXECUTOR.execute(new BackgroundProcess(relativePath));
     }
 

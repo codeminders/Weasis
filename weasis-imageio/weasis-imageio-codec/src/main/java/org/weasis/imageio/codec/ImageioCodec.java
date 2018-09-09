@@ -18,7 +18,6 @@ import javax.imageio.ImageIO;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
-import org.weasis.core.api.image.cv.ImageCVIO;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 
@@ -54,7 +53,7 @@ public class ImageioCodec implements Codec {
     @Override
     public MediaReader getMediaIO(URI media, String mimeType, Hashtable<String, Object> properties) {
         if (isMimeTypeSupported(mimeType)) {
-            return new ImageCVIO(media, mimeType, this);
+            return new ImageElementIO(media, mimeType, this);
         }
         return null;
     }

@@ -24,7 +24,7 @@ import org.weasis.core.ui.util.WtoolBar;
 public class ImportToolBar extends WtoolBar {
 
     public ImportToolBar(int index) {
-        super(Messages.getString("ImportToolBar.import_img_bar"), index); //$NON-NLS-1$
+        super("Images Import Bar", index);
 
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.images", true)) { //$NON-NLS-1$
             AbstractAction action = new AbstractAction() {
@@ -34,9 +34,9 @@ public class ImportToolBar extends WtoolBar {
                     ViewerFactory.getOpenImageAction(e);
                 }
             };
-            action.putValue(Action.LARGE_ICON_KEY, new ImageIcon(SeriesViewerFactory.class.getResource("/icon/32x32/img-import.png"))); //$NON-NLS-1$
+            action.putValue(Action.LARGE_ICON_KEY, new ImageIcon(SeriesViewerFactory.class.getResource("/icon/32x32/img-import.png")));
             final JButton btnImport = new JButton(action);
-            btnImport.setToolTipText(Messages.getString("ImportToolBar.open_img")); //$NON-NLS-1$
+            btnImport.setToolTipText("Open images");
             add(btnImport);
         }
     }

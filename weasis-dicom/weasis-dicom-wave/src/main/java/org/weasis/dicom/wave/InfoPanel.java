@@ -26,7 +26,6 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.util.FontTools;
-import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
@@ -34,10 +33,10 @@ import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 class InfoPanel extends JPanel {
     private static final long serialVersionUID = -470038831713011257L;
 
-    public static final DecimalFormat secondFormatter = new DecimalFormat("##.#### s"); //$NON-NLS-1$
-    public static final DecimalFormat mVFormatter = new DecimalFormat("##.#### mV"); //$NON-NLS-1$
+    public static final DecimalFormat secondFormatter = new DecimalFormat("##.#### s");
+    public static final DecimalFormat mVFormatter = new DecimalFormat("##.#### mV");
 
-    private JLabel lead = new JLabel(" "); //$NON-NLS-1$
+    private JLabel lead = new JLabel(" ");
     private JLabel maximum = new JLabel();
     private JLabel minimum = new JLabel();
 
@@ -122,28 +121,15 @@ class InfoPanel extends JPanel {
     }
 
     public void setMinMax(double minimum, double maximum) {
-        StringBuilder min = new StringBuilder(Messages.getString("InfoPanel.min")); //$NON-NLS-1$
-        min.append(StringUtil.COLON_AND_SPACE);
-        min.append("##.#### mV;"); //$NON-NLS-1$
-        min.append(Messages.getString("InfoPanel.min")); //$NON-NLS-1$
-        min.append(StringUtil.COLON_AND_SPACE);
-        min.append("-##.#### mV"); //$NON-NLS-1$
-        
-        StringBuilder max = new StringBuilder(Messages.getString("InfoPanel.max")); //$NON-NLS-1$
-        max.append(StringUtil.COLON_AND_SPACE);
-        max.append("##.#### mV;"); //$NON-NLS-1$
-        max.append(Messages.getString("InfoPanel.max")); //$NON-NLS-1$
-        max.append(StringUtil.COLON_AND_SPACE);
-        max.append("-##.#### mV"); //$NON-NLS-1$
-        this.minimum.setText(new DecimalFormat(min.toString()).format(minimum));
-        this.maximum.setText(new DecimalFormat(max.toString()).format(maximum));
+        this.minimum.setText(new DecimalFormat("Minimum: ##.#### mV;Minimum: -##.#### mV").format(minimum));
+        this.maximum.setText(new DecimalFormat("Maximum: ##.#### mV;Maximum: -##.#### mV").format(maximum));
     }
 
     public void setCurrentValues(double sec, double mV) {
         if (sec < 0) {
             clearValue(currentLabel, seconds, miliVolt);
         } else {
-            currentLabel.setText(Messages.getString("InfoPanel.cursor")); //$NON-NLS-1$
+            currentLabel.setText("Cursor");
             seconds.setText(secondFormatter.format(sec));
             miliVolt.setText(mVFormatter.format(mV));
         }
@@ -152,7 +138,7 @@ class InfoPanel extends JPanel {
     private void clearValue(JLabel... labels) {
         if (labels != null) {
             for (JLabel l : labels) {
-                l.setText(""); //$NON-NLS-1$
+                l.setText("");
             }
         }
     }

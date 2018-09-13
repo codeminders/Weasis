@@ -79,6 +79,7 @@ import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
 import org.weasis.dicom.explorer.ThumbnailMouseAndKeyAdapter;
+import com.codeminders.demo.GoogleAuthStub;
 import org.weasis.dicom.mf.HttpTag;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
@@ -409,11 +410,8 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     private static URLConnection initConnection(URL url, WadoParameters wadoParameters) throws IOException {
         // If there is a proxy, it should be already configured
-        URLConnection urlConnection = url.openConnection();
-        // Set http login (no protection, only convert in base64)
-        if (wadoParameters.getWebLogin() != null) {
-            urlConnection.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
-        }
+        URLConnection urlConnection = GoogleAuthStub.googleApiConnection(url);
+
         if (!wadoParameters.getHttpTaglist().isEmpty()) {
             for (HttpTag tag : wadoParameters.getHttpTaglist()) {
                 urlConnection.setRequestProperty(tag.getKey(), tag.getValue());

@@ -40,6 +40,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
+import javax.swing.*;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -97,6 +98,7 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.dicom.explorer.google.GoogleCloudDicomStoreFetcher;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 import com.codeminders.demo.GoogleAPIClient;
@@ -121,7 +123,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public static final Icon KO_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/key-images.png")); // $NON-NLS-0$ //$NON-NLS-1$
 
     private static final String CHOOSE_DATASET = "Choose DataSet";
-    
+    private static final String CHOOSE_DICOMSTORE = "Choose Dicomstore";
+
     private JPanel panel = null;
     private PatientPane selectedPatient = null;
 
@@ -210,15 +213,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     private final ArrayListComboBoxModel<Object> modelDicomstore = new ArrayListComboBoxModel<>(DicomSorter.PATIENT_COMPARATOR);
     private final JComboBox<?> googleDicomstoreCombobox = new JComboBox<>(modelDicomstore);
-    private final transient ItemListener dicomstoreChangeListener = e -> {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-        	String dicomstore = modelDicomstore.getSelectedItem().toString();
-            System.out.println(dicomstore);
-            
-            // TODO: Add dicomstore choosen action
-            
-        }
-    };
 
     public DicomExplorer() {
         this(null);
@@ -273,10 +267,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private void updateGoogleDicomstore(String projectId, String locationId, String dataset) {
     	try {
     		modelDicomstore.removeAllElements();
-    		String defDicomstore = "Choose Dicomstore";
-    		modelDicomstore.addElement(defDicomstore);
+            modelDicomstore.addElement(CHOOSE_DICOMSTORE);
     		googleAPIClient.fetchDicomstores(projectId, locationId, dataset).forEach(modelDicomstore::addElement);
-    		modelDicomstore.setSelectedItem(defDicomstore);
+    		modelDicomstore.setSelectedItem(CHOOSE_DICOMSTORE);
     	} catch(Exception e) {
     		JOptionPane.showMessageDialog(null, "Error fetching Google locations for projectId="+projectId+", location="+locationId+" and dataset="+dataset+": " + e.getMessage());
     	}
@@ -874,7 +867,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             gridBagLayout.rowHeights = new int[] { 0, 0, 7 };
             panel.setLayout(gridBagLayout);
             panel.setBorder(new EmptyBorder(5, 5, 5, 5));
-
             
             final GridBagConstraints gridBagConstraints5 = new GridBagConstraints();
             gridBagConstraints5.insets = new Insets(0, 2, 5, 0);
@@ -928,15 +920,35 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             googleDicomstoreCombobox.setFont(FontTools.getFont11());
             JMVUtils.setPreferredWidth(googleDicomstoreCombobox, 145, 145);
             googleDicomstoreCombobox.updateUI();
-            googleDicomstoreCombobox.addItemListener(dicomstoreChangeListener);
+            googleDicomstoreCombobox.addItemListener(e -> {
+                LOGGER.info("Change event " + e);
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    String dicomstore = modelDicomstore.getSelectedItem().toString();
+                    ProjectDescriptor project = (ProjectDescriptor)modelProject.getSelectedItem();
+                    Location location = (Location)modelLocation.getSelectedItem();
+                    String dataset = (String)modelDataset.getSelectedItem();
+                    LOGGER.info("Selected store " + dicomstore);
+
+                    if (location.getName() != null
+                            && project.getId() != null
+                            && dataset != null
+                            && dicomstore != null
+                            && !dicomstore.equals(CHOOSE_DICOMSTORE)) {
+                        new GoogleCloudDicomStoreFetcher(DicomExplorer.this.model).run(
+                                "projects/" + project.getId()
+                                        + "/locations/" + location.getId()
+                                        + "/datasets/" + dataset
+                                        + "/dicomStores/" + dicomstore);
+                    }
+                }
+            });
             JMVUtils.addTooltipToComboList(googleDicomstoreCombobox);
 
-            
             final JLabel label = new JLabel(PATIENT_ICON);
             final GridBagConstraints gridBagConstraints = new GridBagConstraints();
             gridBagConstraints.insets = new Insets(0, 0, 5, 5);
             gridBagConstraints.gridx = 0;
-            gridBagConstraints.gridy = 0;
+            gridBagConstraints.gridy = 4;
             panel.add(label, gridBagConstraints);
 
             final GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
@@ -958,6 +970,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             gridBagConstraints3.anchor = GridBagConstraints.WEST;
             gridBagConstraints3.insets = new Insets(2, 2, 5, 0);
             gridBagConstraints3.gridx = 1;
+
             gridBagConstraints3.gridy = 5;
 
             panel.add(studyCombobox, gridBagConstraints3);

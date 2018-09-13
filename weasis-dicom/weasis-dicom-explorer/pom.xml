@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-dicom-parent</artifactId>
 		<groupId>org.weasis.dicom</groupId>
-		<version>3.0.2-rc1</version>
+		<version>3.0.2-SNAPSHOT</version>
 		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -37,7 +37,8 @@
 							com.google.errorprone.*;resolution:=optional,
 							javax.mail.*;resolution:=optional,
 							sun.misc;resolution:=optional,
-							com.sun.jdmk.comm;resolution:=optional,*
+							com.sun.jdmk.comm;resolution:=optional,
+                            !com.fasterxml.*,!com.codeminders.*,*
 						</Import-Package>
 					</instructions>
 				</configuration>
@@ -46,6 +47,21 @@
 	</build>
 	
 	<dependencies>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>2.9.6</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.9.6</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>2.9.6</version>
+		</dependency>
 		<dependency>
 			<groupId>org.weasis.opencv</groupId>
 			<artifactId>weasis-opencv-core</artifactId>

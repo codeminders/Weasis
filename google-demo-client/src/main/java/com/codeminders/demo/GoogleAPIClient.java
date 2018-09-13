@@ -2,6 +2,9 @@ package com.codeminders.demo;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -110,7 +113,8 @@ public class GoogleAPIClient {
 					
 					cloudResourceManager = new CloudResourceManager.Builder(httpTransport, JSON_FACTORY, credential)
 							.build();
-					accessToken = credential.getAccessToken();					
+					accessToken = credential.getAccessToken();
+					GoogleAuthStub.setAuthToken(accessToken);
 					// run commands
 					tokenInfo(accessToken);
 					userInfo();

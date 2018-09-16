@@ -10,28 +10,6 @@
  *******************************************************************************/
 package org.weasis.dicom.explorer.wado;
 
-import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelListener;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InterruptedIOException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-
-import javax.swing.JProgressBar;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.data.Tag;
@@ -44,22 +22,12 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.SeriesImporter;
-import org.weasis.core.api.media.data.SeriesThumbnail;
-import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.*;
 import org.weasis.core.api.media.data.TagW.TagType;
-import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.AuditLog;
-import org.weasis.core.api.util.FileUtil;
-import org.weasis.core.api.util.NetworkUtil;
-import org.weasis.core.api.util.StreamIOException;
-import org.weasis.core.api.util.StringUtil;
-import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.core.api.util.*;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.DefaultMimeAppFactory;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -83,6 +51,24 @@ import com.codeminders.demo.GoogleAuthStub;
 import org.weasis.dicom.mf.HttpTag;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
+
+import javax.swing.*;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InterruptedIOException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.text.DecimalFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 
 public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesImporter {
 
@@ -383,7 +369,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                     request.append(instance.getDirectDownloadFile());
                 }
                 request.append(wado.getAdditionnalParameters());
-                urlConnection = initConnection(new URL(request.toString()), wado);
+                urlConnection = initConnection(new URL(request.toString()), wado, dicomModel.googleToken);
             } catch (MalformedURLException e) {
                 LOGGER.error("Invalid URL", e); //$NON-NLS-1$
                 continue;
@@ -408,9 +394,12 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         return true;
     }
 
-    private static URLConnection initConnection(URL url, WadoParameters wadoParameters) throws IOException {
+    private static URLConnection initConnection(URL url, WadoParameters wadoParameters, String token) throws IOException {
         // If there is a proxy, it should be already configured
-        URLConnection urlConnection = GoogleAuthStub.googleApiConnection(url);
+        URLConnection urlConnection = url.openConnection();
+        if (token != null) {
+            urlConnection.addRequestProperty("Authorization", "Bearer " + token);
+        }
 
         if (!wadoParameters.getHttpTaglist().isEmpty()) {
             for (HttpTag tag : wadoParameters.getHttpTaglist()) {
@@ -538,7 +527,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 + "&objectUID=" + SOPInstanceUID + "&contentType=image/jpeg&imageQuality=70" + "&rows=" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + Thumbnail.MAX_SIZE + "&columns=" + Thumbnail.MAX_SIZE + wadoParameters.getAdditionnalParameters()); //$NON-NLS-1$
 
-        URLConnection httpCon = initConnection(url, wadoParameters);
+        URLConnection httpCon = initConnection(url, wadoParameters, null);
         File outFile = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.debug("Start to download JPEG thbumbnail {} to {}.", url, outFile.getName()); //$NON-NLS-1$
         FileUtil.writeStreamWithIOException(httpCon, outFile);
@@ -630,7 +619,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             }
 
             final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
-            return NetworkUtil.getUrlInputStream(initConnection(new URL(buffer.toString()), wado));
+            return NetworkUtil.getUrlInputStream(initConnection(new URL(buffer.toString()), wado, dicomModel.googleToken));
         }
 
         @Override

@@ -50,25 +50,7 @@ import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import javax.swing.Action;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JSeparator;
-import javax.swing.KeyStroke;
-import javax.swing.LookAndFeel;
-import javax.swing.RootPaneContainer;
-import javax.swing.SwingUtilities;
-import javax.swing.TransferHandler;
-import javax.swing.WindowConstants;
+import javax.swing.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -335,7 +317,7 @@ public class WeasisWin {
 
         // control.setDefaultLocation(UIManager.BASE_AREA.
         // this.add(UIManager.EAST_AREA, BorderLayout.EAST);
-        rootPaneContainer.getContentPane().add(UIManager.BASE_AREA, BorderLayout.CENTER);
+        rootPaneContainer.getContentPane().add(UIManager.getOrCreateRootComponent(), BorderLayout.CENTER);
         // Allow to drop series into the empty main area
         UIManager.MAIN_AREA.getComponent().setTransferHandler(new SequenceHandler());
         UIManager.MAIN_AREA.setLocation(CLocation.base().normalRectangle(0, 0, 1, 1));

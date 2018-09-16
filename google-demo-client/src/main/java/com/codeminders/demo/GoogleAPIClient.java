@@ -1,28 +1,16 @@
 package com.codeminders.demo;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringTokenizer;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
+import com.codeminders.demo.model.Dataset;
+import com.codeminders.demo.model.DicomStore;
+import com.codeminders.demo.model.Location;
+import com.codeminders.demo.model.ProjectDescriptor;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpHeaders;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.*;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.DataStoreFactory;
@@ -36,6 +24,14 @@ import com.google.api.services.oauth2.model.Userinfoplus;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class GoogleAPIClient {
 	/**
@@ -96,7 +92,14 @@ public class GoogleAPIClient {
 		return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
 	}
 
-	public void signIn() throws Exception{
+	public String getAccessToken() {
+	    if (accessToken == null) {
+	        signIn();
+        }
+        return accessToken;
+    }
+
+	public void signIn() {
 		if (!isSignedIn) {
 			int tryCount = 0;
 			Exception error;
@@ -127,7 +130,7 @@ public class GoogleAPIClient {
 				}
 				} while (!isSignedIn && tryCount < 4);
 			if (error != null) {
-				throw error;
+				throw new IllegalStateException(error);
 			}
 		}
 	}
@@ -178,23 +181,24 @@ public class GoogleAPIClient {
 		return request.execute();
 	}
 	
-	public List<Location> fetchLocations(String projectId) throws Exception {
+	public List<Location> fetchLocations(ProjectDescriptor project) throws Exception {
 		signIn();
-		String url = "https://healthcare.googleapis.com/v1alpha/projects/"+projectId+"/locations";
+		String url = "https://healthcare.googleapis.com/v1alpha/projects/" + project.getId() + "/locations";
 		String data = googleRequest(url).parseAsString();
 		JsonParser parser = new JsonParser();
 		JsonElement jsonTree = parser.parse(data);
 	    JsonArray jsonObject = jsonTree.getAsJsonObject().get("locations").getAsJsonArray();
-	    List<Location> list = StreamSupport.stream(jsonObject.spliterator(), false)
-		    .map(obj -> obj.getAsJsonObject())
-		    .map(obj -> { return new Location(obj.get("name").getAsString(), obj.get("locationId").getAsString());})
-		    .collect(Collectors.toList());
-	    return list;
+        return StreamSupport.stream(jsonObject.spliterator(), false)
+            .map(JsonElement::getAsJsonObject)
+            .map(obj -> new Location(project,
+                    obj.get("name").getAsString(),
+                    obj.get("locationId").getAsString()))
+            .collect(Collectors.toList());
 	}
 	
-	public List<String> fetchDatasets(String projectId, String locationId) throws Exception {
+	public List<Dataset> fetchDatasets(Location location) throws Exception {
 		signIn();
-		String url = "https://healthcare.googleapis.com/v1alpha/projects/"+projectId+"/locations/"+locationId+"/datasets";
+		String url = "https://healthcare.googleapis.com/v1alpha/projects/"+location.getParent().getId()+"/locations/"+location.getId()+"/datasets";
 		String data = googleRequest(url).parseAsString();
 		JsonParser parser = new JsonParser();
 		JsonElement jsonTree = parser.parse(data);
@@ -202,21 +206,35 @@ public class GoogleAPIClient {
 	    return StreamSupport.stream(jsonObject.spliterator(), false)
 		    .map(obj -> obj.getAsJsonObject().get("name").getAsString())
 		    .map(this::parseName)
+            .map(name -> new Dataset(location, name))
 		    .collect(Collectors.toList());
 	}
 
-	public List<String> fetchDicomstores(String projectId, String locationId, String dataset) throws Exception {
+	public List<DicomStore> fetchDicomstores(Dataset dataset) throws Exception {
 		signIn();
-		String url = "https://healthcare.googleapis.com/v1alpha/projects/"+projectId+"/locations/"+locationId+"/datasets/"+dataset+"/dicomStores";
+		String url = "https://healthcare.googleapis.com/v1alpha"
+                        + "/projects/" + dataset.getProject().getId()
+                        + "/locations/" + dataset.getParent().getId()
+                        + "/datasets/" + dataset.getName() + "/dicomStores";
 		String data = googleRequest(url).parseAsString();
 		JsonParser parser = new JsonParser();
 		JsonElement jsonTree = parser.parse(data);
 	    JsonArray jsonObject = jsonTree.getAsJsonObject().get("dicomStores").getAsJsonArray();
-	    List<String> result = StreamSupport.stream(jsonObject.spliterator(), false)
+
+	    return StreamSupport.stream(jsonObject.spliterator(), false)
 		    .map(obj -> obj.getAsJsonObject().get("name").getAsString())
 		    .map(this::parseName)
+            .map(name -> new DicomStore(dataset, name))
 		    .collect(Collectors.toList());
-	    return result;
 	}
+
+	public static String getImageUrl(DicomStore store, String studyId) {
+        return "https://healthcare.googleapis.com/v1alpha"
+                + "/projects/" + store.getProject().getId()
+                + "/locations/" + store.getLocation().getId()
+                + "/datasets/" + store.getParent().getName()
+                + "/dicomStores/" + store.getName()
+                + "/dicomWeb/studies/" + studyId;
+    }
 	
 }

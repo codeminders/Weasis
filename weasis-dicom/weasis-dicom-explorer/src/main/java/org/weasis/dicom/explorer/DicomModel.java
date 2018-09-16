@@ -90,6 +90,8 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 public class DicomModel implements TreeModel, DataExplorerModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomModel.class);
 
+    public volatile String googleToken;
+
     public static final String NAME = "DICOM"; //$NON-NLS-1$
     public static final String PREFERENCE_NODE = "dicom.model"; //$NON-NLS-1$
 
@@ -971,6 +973,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     private void getCommand(Option opt, List<String> largs, List<String> rargs, List<String> iargs,
         List<String> wargs) {
+
+        UIManager.subscribeOnViewSelected((url, accessToken) -> {
+                    DicomModel.this.googleToken = accessToken;
+                    LOADING_EXECUTOR.execute(new LoadRemoteDicomURL(new String[]{url}, DicomModel.this));
+                }
+        );
+
         // start importing local dicom series list
         if (opt.isSet("local")) { //$NON-NLS-1$
             File[] files = new File[largs.size()];

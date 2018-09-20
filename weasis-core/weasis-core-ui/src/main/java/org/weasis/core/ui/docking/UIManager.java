@@ -10,12 +10,15 @@
  *******************************************************************************/
 package org.weasis.core.ui.docking;
 
-import java.awt.Window;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
+import com.codeminders.demo.ui.MainPanel;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.ui.editor.SeriesViewer;
@@ -62,6 +65,29 @@ public class UIManager {
     // public static final CContentArea WEST_AREA = DOCKING_CONTROL.createContentArea("westArea");
 
     private UIManager() {
+    }
+
+    private static MainPanel panel;
+
+    public static Component getOrCreateRootComponent() {
+        if (panel == null) {
+            synchronized (UIManager.class) {
+                if (panel == null) {
+                    panel = new MainPanel(UIManager.BASE_AREA);
+                }
+            }
+        }
+        return panel;
+    }
+
+    public static void goBackToTable() {
+        getOrCreateRootComponent();
+        panel.showExplorer();
+    }
+
+    public static void subscribeOnViewSelected(BiConsumer<String, String> consumer) {
+        getOrCreateRootComponent();
+        panel.addViewSelectedListener(consumer.andThen((a, b) -> panel.showViewer()));
     }
 
     public static Window getApplicationWindow() {

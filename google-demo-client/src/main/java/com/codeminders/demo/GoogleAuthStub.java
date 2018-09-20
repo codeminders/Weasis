@@ -1,11 +1,16 @@
 package com.codeminders.demo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
 public class GoogleAuthStub {
+
+    private static Logger LOGGER = LoggerFactory.getLogger(GoogleAuthStub.class);
 
     private static volatile String authToken;
 

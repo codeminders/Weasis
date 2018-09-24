@@ -42,8 +42,6 @@ public class StudyModel {
     @JsonProperty("00100030")
     private RecordPlain birthDate;
 
-    //TODO NOI, Type
-
     public RecordPlain getStudyInstanceUID() {
         return studyInstanceUID;
     }

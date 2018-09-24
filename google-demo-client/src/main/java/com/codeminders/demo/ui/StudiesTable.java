@@ -1,26 +1,24 @@
 package com.codeminders.demo.ui;
 
-import com.codeminders.demo.GoogleAPIClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
-import java.util.function.Consumer;
 
 public class StudiesTable extends JPanel {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StudiesTable.class);
 
     private static final Object[] COLUMN_NAMES = {
-            "Patient name", "Patient ID", "ACC.#", "NOI", "Study date", "Study time",
-            "Type", "Desc", "REF.PHD", "REQ.PHD", "LOCATION", "BIRTH DATE"
+            "Patient name", "Patient ID", "ACC.#", "Study date", "Study time",
+            "Desc", "REF.PHD", "REQ.PHD", "LOCATION", "BIRTH DATE"
     };
 
     private final DefaultTableModel tableModel;
@@ -67,10 +65,8 @@ public class StudiesTable extends JPanel {
         values.add(study.getPatientName());
         values.add(study.getPatientId());
         values.add(study.getAccountNumber());
-        values.add(study.getNoi());
         values.add(study.getStudyDate());
         values.add(study.getStudyTime());
-        values.add(study.getType());
         values.add(study.getDescription());
         values.add(study.getRefPhd());
         values.add(study.getReqPhd());

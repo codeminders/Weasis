@@ -5,6 +5,7 @@ import com.codeminders.demo.GoogleAuthStub;
 import com.codeminders.demo.model.DicomStore;
 import com.codeminders.demo.model.StudyModel;
 import com.codeminders.demo.model.StudyModel.Value;
+import com.codeminders.demo.model.StudyQuery;
 import com.codeminders.demo.ui.StudyView;
 import com.codeminders.demo.util.NetworkUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -19,8 +20,10 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.util.ArrayList;
 import java.util.List;
 
+import static com.codeminders.demo.util.StringUtils.*;
 import static java.util.stream.Collectors.toList;
 
 public class LoadStudiesTask extends AbstractDicomSelectorTask<List<StudyView>> {
@@ -36,12 +39,23 @@ public class LoadStudiesTask extends AbstractDicomSelectorTask<List<StudyView>> 
             .toFormatter();
 
     private final DicomStore store;
+    private final StudyQuery query;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public LoadStudiesTask(DicomStore store, GoogleAPIClient api, DicomStoreSelector view) {
+    public LoadStudiesTask(DicomStore store,
+                           GoogleAPIClient api,
+                           DicomStoreSelector view) {
+        this(store, api, view, null);
+    }
+
+    public LoadStudiesTask(DicomStore store,
+                           GoogleAPIClient api,
+                           DicomStoreSelector view,
+                           StudyQuery studyQuery) {
         super(api, view);
         this.store = store;
+        this.query = studyQuery;
     }
 
     @Override
@@ -50,7 +64,8 @@ public class LoadStudiesTask extends AbstractDicomSelectorTask<List<StudyView>> 
                 + "/locations/" + store.getLocation().getId()
                 + "/datasets/" + store.getParent().getName()
                 + "/dicomStores/" + store.getName()
-                + DICOM_WEB_STUDIES;
+                + DICOM_WEB_STUDIES + formatQuery(query);
+
         URLConnection connection = GoogleAuthStub.googleApiConnection(fullQuery);
 
         LOGGER.info("Reading from " + fullQuery);
@@ -99,6 +114,42 @@ public class LoadStudiesTask extends AbstractDicomSelectorTask<List<StudyView>> 
         }
 
         return view;
+    }
+
+    private String formatQuery(StudyQuery query) {
+        if (query == null) {
+            return "";
+        }
+
+        List<String> parameters = new ArrayList<>();
+        if (isNotBlank(query.getPatientName())) {
+            parameters.add("PatientName=" + urlEncode(query.getPatientName()));
+        }
+
+        if (isNotBlank(query.getPatientId())) {
+            parameters.add("PatientID=" + urlEncode(query.getPatientId()));
+        }
+
+        if (isNotBlank(query.getAccessionNumber())) {
+            parameters.add("AccessionNumber=" + urlEncode(query.getAccessionNumber()));
+        }
+
+        if (query.getStartDate() != null && query.getEndDate() != null) {
+            parameters.add("StudyDate="
+                    + urlEncode(DATE_FORMAT.format(query.getStartDate()))
+                    + "-" + urlEncode(DATE_FORMAT.format(query.getEndDate()))
+            );
+        }
+
+        if (isNotBlank(query.getPhysicianName())) {
+            parameters.add("ReferringPhysicianName=" + urlEncode(query.getPhysicianName()));
+        }
+
+        if (parameters.isEmpty()) {
+            return "";
+        } else {
+            return "?" + join(parameters, "&");
+        }
     }
 
     @Override

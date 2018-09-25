@@ -87,8 +87,13 @@ public class UIManager {
 
     public static void subscribeOnViewSelected(BiConsumer<String, String> consumer) {
         getOrCreateRootComponent();
-        panel.addViewSelectedListener(consumer.andThen((a, b) -> panel.showViewer()));
+        panel.addViewSelectedListener(consumer.andThen((a, b) -> panel.showLoadIndicator()));
     }
+
+    public static void showViewer() {
+        panel.showViewer();
+    }
+
 
     public static Window getApplicationWindow() {
         return WinUtil.getParentWindow(UIManager.BASE_AREA);

@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+import static javax.swing.BoxLayout.PAGE_AXIS;
+
 public class GoogleExplorer extends JPanel {
 
     private final StudiesTable table;
@@ -17,19 +19,34 @@ public class GoogleExplorer extends JPanel {
     private final List<BiConsumer<String, String>> studySelectedListener = new ArrayList<>();
     private final DicomStoreSelector storeSelector;
 
+    private final SearchPanel searchPanel;
+
     public GoogleExplorer(GoogleAPIClient googleAPIClient) {
         this.googleAPIClient = googleAPIClient;
 
         BorderLayout layout = new BorderLayout();
 
-        layout.setVgap(20);
+        layout.setHgap(15);
         setLayout(layout);
 
         table = new StudiesTable(this);
         storeSelector = new DicomStoreSelector(googleAPIClient, table);
+        searchPanel = new SearchPanel(googleAPIClient, storeSelector);
 
-        add(table, BorderLayout.CENTER);
-        add(storeSelector, BorderLayout.NORTH);
+        add(centralComponent(), BorderLayout.CENTER);
+        add(searchPanel, BorderLayout.WEST);
+    }
+
+    public Component centralComponent() {
+        JPanel panel = new JPanel();
+        BoxLayout layout = new BoxLayout(panel, PAGE_AXIS);
+        panel.setLayout(layout);
+
+        panel.add(storeSelector);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(table);
+
+        return panel;
     }
 
     public void fireStudySelected(String studyId) {

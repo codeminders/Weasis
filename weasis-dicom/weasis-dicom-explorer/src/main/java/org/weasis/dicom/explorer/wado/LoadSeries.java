@@ -397,6 +397,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     private static URLConnection initConnection(URL url, WadoParameters wadoParameters, String token) throws IOException {
         // If there is a proxy, it should be already configured
         URLConnection urlConnection = url.openConnection();
+        urlConnection.addRequestProperty("Accept", "multipart/related; type=application/dicom; transfer-syntax=*");
         if (token != null) {
             urlConnection.addRequestProperty("Authorization", "Bearer " + token);
         }

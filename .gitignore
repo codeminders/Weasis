@@ -39,3 +39,5 @@ hs_err*.log
 /index.xml*
 /bin/
 /src/
+
+/demo-server/src/main/resources/public/weasis/*

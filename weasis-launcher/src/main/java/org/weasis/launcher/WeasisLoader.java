@@ -224,6 +224,7 @@ public class WeasisLoader {
             });
             EventQueue.invokeAndWait(() -> {
                 try {
+                    auth.clearSignIn();
                 	auth.signIn();
                 } catch (Exception e) {
                 	JOptionPane.showMessageDialog(null, "Error in Google Sign In: " + e.getMessage());

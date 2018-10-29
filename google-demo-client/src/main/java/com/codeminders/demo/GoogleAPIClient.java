@@ -25,6 +25,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -133,6 +134,22 @@ public class GoogleAPIClient {
 				throw new IllegalStateException(error);
 			}
 		}
+	}
+
+	public void clearSignIn() {
+		deleteDir(DATA_STORE_DIR);
+	}
+
+	private void deleteDir(File file) {
+		if (!file.exists()) {
+			return;
+		}
+		if (file.isDirectory()) {
+			for (File child: file.listFiles()) {
+				deleteDir(child);
+			}
+		}
+		file.delete();
 	}
 
 	private static void tokenInfo(String accessToken) throws IOException {

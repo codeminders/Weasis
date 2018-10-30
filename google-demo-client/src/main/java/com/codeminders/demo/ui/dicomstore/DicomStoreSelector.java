@@ -7,12 +7,18 @@ import com.codeminders.demo.model.Location;
 import com.codeminders.demo.model.ProjectDescriptor;
 import com.codeminders.demo.ui.StudiesTable;
 import com.codeminders.demo.ui.StudyView;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -20,6 +26,8 @@ import java.util.function.Function;
 import static java.util.Collections.emptyList;
 
 public class DicomStoreSelector extends JPanel {
+
+    private static final Logger log = LoggerFactory.getLogger(DicomStoreSelector.class);
 
     private final GoogleAPIClient googleAPIClient;
 
@@ -59,48 +67,89 @@ public class DicomStoreSelector extends JPanel {
         googleLocationCombobox.setRenderer(new ListRenderer<>(Location::getId, "-- Choose location --"));
         googleDatasetCombobox.setRenderer(new ListRenderer<>(Dataset::getName, "-- Choose dataset --"));
         googleDicomstoreCombobox.setRenderer(new ListRenderer<>(DicomStore::getName, "-- Choose store --"));
+        googleProjectCombobox.setLightWeightPopupEnabled(false);
 
         googleProjectCombobox.addItemListener(this.<ProjectDescriptor>selectedListener(
                 project -> new LoadLocationsTask(project, googleAPIClient, this),
                 nothing -> updateLocations(emptyList())
         ));
 
+        AutoRefreshComboBoxExtension.wrap(googleProjectCombobox, () -> {
+            log.info("Reloading projects");
+            new LoadProjectsTask(googleAPIClient, DicomStoreSelector.this).execute();
+            return true;
+        });
+
         googleLocationCombobox.addItemListener(this.<Location>selectedListener(
                 location -> new LoadDatasetsTask(location, googleAPIClient, this),
                 nothing  -> updateDatasets(emptyList())
         ));
+
+        AutoRefreshComboBoxExtension.wrap(googleLocationCombobox, () ->
+            getSelectedItem(modelProject).map(
+                    (project) -> {
+                        log.info("Reloading locations");
+                        new LoadLocationsTask(project, googleAPIClient, DicomStoreSelector.this).execute();
+                        return true;
+                    }
+            ).orElse(false)
+        );
 
         googleDatasetCombobox.addItemListener(this.<Dataset>selectedListener(
                 dataset -> new LoadDicomStoresTask(dataset, googleAPIClient, this),
                 nothing -> updateDicomStores(emptyList())
         ));
 
+        AutoRefreshComboBoxExtension.wrap(googleDatasetCombobox, () ->
+                getSelectedItem(modelLocation).map(
+                        (location) -> {
+                            log.info("Reloading Datasets");
+                            new LoadDatasetsTask(location, googleAPIClient, DicomStoreSelector.this).execute();
+                            return true;
+                        }
+                ).orElse(false)
+        );
+
         googleDicomstoreCombobox.addItemListener(this.<DicomStore>selectedListener(
                 store -> new LoadStudiesTask(store, googleAPIClient, this),
                 nothing -> updateTable(emptyList())
         ));
 
+        AutoRefreshComboBoxExtension.wrap(googleDicomstoreCombobox, () ->
+                getSelectedItem(modelDataset).map(
+                        (dataset) -> {
+                            log.info("Reloading Dicom stores");
+                            new LoadDicomStoresTask(dataset, googleAPIClient, DicomStoreSelector.this).execute();
+                            return true;
+                        }
+                ).orElse(false)
+        );
+
         new LoadProjectsTask(googleAPIClient, this).execute();
     }
 
     public void updateProjects(List<ProjectDescriptor> result) {
-        updateModel(result, modelProject);
-        updateLocations(emptyList());
+        if (updateModel(result, modelProject)) {
+            updateLocations(emptyList());
+        }
     }
 
     public void updateLocations(List<Location> result) {
-        updateModel(result, modelLocation);
-        updateDatasets(emptyList());
+        if (updateModel(result, modelLocation)) {
+            updateDatasets(emptyList());
+        }
     }
 
     public void updateDatasets(List<Dataset> result) {
-        updateModel(result, modelDataset);
-        updateDicomStores(emptyList());
+        if (updateModel(result, modelDataset)) {
+            updateDicomStores(emptyList());
+        }
     }
 
     public void updateDicomStores(List<DicomStore> result) {
-        updateModel(result, modelDicomstore);
-        updateTable(emptyList());
+        if (updateModel(result, modelDicomstore)) {
+            updateTable(emptyList());
+        }
     }
 
     public void updateTable(List<StudyView> studies) {
@@ -112,13 +161,51 @@ public class DicomStoreSelector extends JPanel {
         return (Optional<DicomStore>) modelDicomstore.getSelectedItem();
     }
 
-    private <T>void updateModel(List<T> list, DefaultComboBoxModel<Optional<T>> model) {
-        model.removeAllElements();
-        if (!list.isEmpty()) {
-            model.addElement(Optional.empty());
-            list.stream().map(Optional::of).forEach(model::addElement);
-            model.setSelectedItem(Optional.empty());
+    /**
+     * @return true if selected item changed, false otherwise
+     */
+    private <T>boolean updateModel(List<T> list, DefaultComboBoxModel<Optional<T>> model) {
+        Optional<T> selectedItem = (Optional<T>)model.getSelectedItem();
+        return Optional.ofNullable(selectedItem)
+                .flatMap(x -> x)
+                .filter(list::contains)
+                .map(item -> {
+                    replaceAllExcludingItem(item, list, model);
+                    return false;
+                })
+                .orElseGet(() -> {
+                    model.removeAllElements();
+                    if (!list.isEmpty()) {
+                        model.addElement(Optional.empty());
+                        list.stream().map(Optional::of).forEach(model::addElement);
+                        model.setSelectedItem(Optional.empty());
+                    }
+                    return true;
+                });
+    }
+
+    private <T>void replaceAllExcludingItem(T selectedItem, List<T> list, DefaultComboBoxModel<Optional<T>> model) {
+        List<Optional<T>> toDelete = new ArrayList<>();
+        for (int i = 0; i < model.getSize(); i++) {
+            Optional<T> currentItem = (Optional<T>)model.getElementAt(i);
+            if (!Objects.equals(currentItem, Optional.of(selectedItem))) {
+                toDelete.add(currentItem);
+            }
         }
+        toDelete.forEach(model::removeElement);
+
+        int selectedIndex = list.indexOf(selectedItem);
+        model.insertElementAt(Optional.empty(), 0);
+        for (int i = 0; i < list.size(); i++) {
+            if (selectedIndex != i) {
+                if (selectedIndex > i) {
+                    model.insertElementAt(Optional.of(list.get(i)), model.getSize() - 1);
+                } else {
+                    model.insertElementAt(Optional.of(list.get(i)), model.getSize());
+                }
+            }
+        }
+
     }
 
     private <T>ItemListener selectedListener(Function<T, SwingWorker<?, ?>> taskFactory, Consumer<Void> onEmpty) {
@@ -133,6 +220,11 @@ public class DicomStoreSelector extends JPanel {
                 item.map(taskFactory).ifPresent(SwingWorker::execute);
             }
         };
+    }
+
+    private static <T>Optional<T> getSelectedItem(DefaultComboBoxModel<Optional<T>> model) {
+        return Optional.ofNullable(model.getSelectedItem())
+                .flatMap(x -> (Optional<T>) x);
     }
 
     private class ListRenderer<T> implements ListCellRenderer<Optional<T>> {

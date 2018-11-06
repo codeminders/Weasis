@@ -15,6 +15,7 @@ cp ./target/resources.zip ../demo-server/src/main/resources/public/weasis/
 cp ./target/portable-dist/weasis/*.jar ../demo-server/src/main/resources/public/weasis/
 cp -r ./target/portable-dist/weasis/conf ../demo-server/src/main/resources/public/weasis/
 cp -r ./target/portable-dist/weasis/bundle ../demo-server/src/main/resources/public/weasis/
+cp -r ./client_secrets.json ../demo-server/src/main/resources/public/weasis/
 
 cd ../demo-server/
 mvn clean install

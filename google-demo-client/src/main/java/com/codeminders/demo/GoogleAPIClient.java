@@ -25,9 +25,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -78,8 +77,9 @@ public class GoogleAPIClient {
 	
 	private static Credential authorize() throws Exception {
 		// load client secrets
-		clientSecrets = GoogleClientSecrets.load(JSON_FACTORY,
-				new InputStreamReader(GoogleAPIClient.class.getResourceAsStream("/client_secrets.json")));
+		try (InputStream in = getSecret()) {
+			clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+		}
 		if (clientSecrets.getDetails().getClientId().startsWith("Enter")
 				|| clientSecrets.getDetails().getClientSecret().startsWith("Enter ")) {
 			System.out.println("Enter Client ID and Secret from https://code.google.com/apis/console/ "
@@ -91,6 +91,21 @@ public class GoogleAPIClient {
 				clientSecrets, SCOPES).setDataStoreFactory(dataStoreFactory).build();
 		// authorize
 		return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
+	}
+
+	private static InputStream getSecret() throws IOException {
+		String file = System.getProperty("google.client.secret");
+		if (file != null) {
+			return new FileInputStream(file);
+		}
+
+		String portableDir = System.getProperty("weasis.portable.dir");
+		if (portableDir != null) {
+			return new FileInputStream(portableDir + File.separator + "client_secrets.json");
+		}
+
+		String url = System.getProperty("weasis.codebase.url");
+		return new URL(url + "/client_secrets.json").openStream();
 	}
 
 	public String getAccessToken() {

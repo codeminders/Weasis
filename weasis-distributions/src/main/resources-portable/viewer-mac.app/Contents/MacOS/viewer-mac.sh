@@ -68,10 +68,7 @@ fi
 userParameters=()
 for var in "$@"
 do
-if [[ $var == \$* ]]
-then
   userParameters+=("$var")
-fi
 done
 echo user arguments: ${userParameters[@]}
 

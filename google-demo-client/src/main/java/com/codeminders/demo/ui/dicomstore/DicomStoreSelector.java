@@ -54,6 +54,23 @@ public class DicomStoreSelector extends JPanel {
         googleDatasetCombobox.setPrototypeDisplayValue(Optional.empty());
         googleDicomstoreCombobox.setPrototypeDisplayValue(Optional.empty());
 
+        JButton loginButton = new JButton("Login");
+        loginButton.addActionListener(e -> {
+        	googleAPIClient.signIn();
+            new LoadProjectsTask(googleAPIClient, this).execute();
+        });
+        JButton logoutButton = new JButton("Logout");
+        logoutButton.addActionListener(e -> {
+        	googleAPIClient.signOut();
+        	modelProject.removeAllElements();
+        	modelLocation.removeAllElements();
+        	modelDataset.removeAllElements();
+        	modelDicomstore.removeAllElements();
+            table.clearTable();
+        });
+        
+        add(loginButton);
+        add(Box.createHorizontalStrut(10));
         add(googleProjectCombobox);
         add(Box.createHorizontalStrut(10));
         add(googleLocationCombobox);
@@ -61,6 +78,8 @@ public class DicomStoreSelector extends JPanel {
         add(googleDatasetCombobox);
         add(Box.createHorizontalStrut(10));
         add(googleDicomstoreCombobox);
+        add(Box.createHorizontalStrut(10));
+        add(logoutButton);
         add(Box.createHorizontalGlue());
 
         googleProjectCombobox.setRenderer(new ListRenderer<>(ProjectDescriptor::getName, "-- Choose project --"));
@@ -124,8 +143,6 @@ public class DicomStoreSelector extends JPanel {
                         }
                 ).orElse(false)
         );
-
-        new LoadProjectsTask(googleAPIClient, this).execute();
     }
 
     public void updateProjects(List<ProjectDescriptor> result) {

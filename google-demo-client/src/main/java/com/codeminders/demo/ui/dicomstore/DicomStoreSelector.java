@@ -28,6 +28,11 @@ import static java.util.Collections.emptyList;
 public class DicomStoreSelector extends JPanel {
 
     private static final Logger log = LoggerFactory.getLogger(DicomStoreSelector.class);
+    
+    private static final String TEXT_GOOGLE_SIGN_IN = "Google Sign In";
+    private static final String TEXT_GOOGLE_SIGN_OUT = "Google Sign Out";
+    private static final String ACTION_SIGN_IN = "signIn";
+    private static final String ACTION_SIGN_OUT = "signOut";
 
     private final GoogleAPIClient googleAPIClient;
 
@@ -54,23 +59,27 @@ public class DicomStoreSelector extends JPanel {
         googleDatasetCombobox.setPrototypeDisplayValue(Optional.empty());
         googleDicomstoreCombobox.setPrototypeDisplayValue(Optional.empty());
 
-        JButton loginButton = new JButton("Login");
-        loginButton.addActionListener(e -> {
-        	googleAPIClient.signIn();
-            new LoadProjectsTask(googleAPIClient, this).execute();
-        });
-        JButton logoutButton = new JButton("Logout");
-        logoutButton.addActionListener(e -> {
-        	googleAPIClient.signOut();
-        	modelProject.removeAllElements();
-        	modelLocation.removeAllElements();
-        	modelDataset.removeAllElements();
-        	modelDicomstore.removeAllElements();
-            table.clearTable();
+        googleAPIClient.signOut();
+        JButton googleAuthButton = new JButton(TEXT_GOOGLE_SIGN_IN);
+        googleAuthButton.setActionCommand(ACTION_SIGN_IN);
+        googleAuthButton.addActionListener(e -> {
+        	if (e.getActionCommand().equals(ACTION_SIGN_IN)) {
+            	googleAPIClient.signIn();
+            	googleAuthButton.setText(TEXT_GOOGLE_SIGN_OUT);
+            	googleAuthButton.setActionCommand(ACTION_SIGN_OUT);
+                new LoadProjectsTask(googleAPIClient, this).execute();
+        	} else {
+            	googleAPIClient.signOut();
+            	googleAuthButton.setText(TEXT_GOOGLE_SIGN_IN);
+            	googleAuthButton.setActionCommand(ACTION_SIGN_IN);
+            	modelProject.removeAllElements();
+            	modelLocation.removeAllElements();
+            	modelDataset.removeAllElements();
+            	modelDicomstore.removeAllElements();
+                table.clearTable();
+        	}
         });
         
-        add(loginButton);
-        add(Box.createHorizontalStrut(10));
         add(googleProjectCombobox);
         add(Box.createHorizontalStrut(10));
         add(googleLocationCombobox);
@@ -79,7 +88,7 @@ public class DicomStoreSelector extends JPanel {
         add(Box.createHorizontalStrut(10));
         add(googleDicomstoreCombobox);
         add(Box.createHorizontalStrut(10));
-        add(logoutButton);
+        add(googleAuthButton);
         add(Box.createHorizontalGlue());
 
         googleProjectCombobox.setRenderer(new ListRenderer<>(ProjectDescriptor::getName, "-- Choose project --"));

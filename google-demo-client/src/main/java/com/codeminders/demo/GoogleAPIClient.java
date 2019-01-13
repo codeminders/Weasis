@@ -162,6 +162,13 @@ public class GoogleAPIClient {
 	private void clearSignIn() {
 		deleteDir(DATA_STORE_DIR);
 	}
+	
+	public boolean isAuthorized() {
+		if (DATA_STORE_DIR.exists()) {
+			return true;
+		}
+		return false;
+	}
 
 	private void deleteDir(File file) {
 		if (!file.exists()) {

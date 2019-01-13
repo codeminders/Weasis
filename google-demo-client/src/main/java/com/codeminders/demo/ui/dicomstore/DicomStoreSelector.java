@@ -42,6 +42,13 @@ public class DicomStoreSelector extends JPanel {
     private final DefaultComboBoxModel<Optional<DicomStore>> modelDicomstore = new DefaultComboBoxModel<>();
 
     private final StudiesTable table;
+    
+    private void processSignedIn(JButton googleAuthButton) {
+    	googleAPIClient.signIn();
+    	googleAuthButton.setText(TEXT_GOOGLE_SIGN_OUT);
+    	googleAuthButton.setActionCommand(ACTION_SIGN_OUT);
+        new LoadProjectsTask(googleAPIClient, this).execute();
+    }
 
     public DicomStoreSelector(GoogleAPIClient googleAPIClient, StudiesTable table) {
         this.googleAPIClient = googleAPIClient;
@@ -59,15 +66,16 @@ public class DicomStoreSelector extends JPanel {
         googleDatasetCombobox.setPrototypeDisplayValue(Optional.empty());
         googleDicomstoreCombobox.setPrototypeDisplayValue(Optional.empty());
 
-        googleAPIClient.signOut();
-        JButton googleAuthButton = new JButton(TEXT_GOOGLE_SIGN_IN);
-        googleAuthButton.setActionCommand(ACTION_SIGN_IN);
+        JButton googleAuthButton = new JButton();
+        if (googleAPIClient.isAuthorized()) {
+        	processSignedIn(googleAuthButton);
+        } else {
+	        googleAuthButton.setText(TEXT_GOOGLE_SIGN_IN);
+	        googleAuthButton.setActionCommand(ACTION_SIGN_IN);
+        }
         googleAuthButton.addActionListener(e -> {
         	if (e.getActionCommand().equals(ACTION_SIGN_IN)) {
-            	googleAPIClient.signIn();
-            	googleAuthButton.setText(TEXT_GOOGLE_SIGN_OUT);
-            	googleAuthButton.setActionCommand(ACTION_SIGN_OUT);
-                new LoadProjectsTask(googleAPIClient, this).execute();
+        		processSignedIn(googleAuthButton);
         	} else {
             	googleAPIClient.signOut();
             	googleAuthButton.setText(TEXT_GOOGLE_SIGN_IN);

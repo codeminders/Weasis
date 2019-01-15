@@ -85,6 +85,8 @@ import org.weasis.dicom.explorer.ThumbnailMouseAndKeyAdapter;
 import org.weasis.dicom.mf.HttpTag;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
+
+import com.codeminders.demo.GoogleAPIClientFactory;
 import com.codeminders.demo.GoogleAuthStub;
 
 public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesImporter {
@@ -412,6 +414,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     }
 
     private static Map<String, String> getHttpTags(WadoParameters wadoParameters, String token) {
+    	token = GoogleAPIClientFactory.getInstance().createGoogleClient().refresh();
         boolean hasBundleTags = !BundleTools.SESSION_TAGS_FILE.isEmpty();
         boolean hasWadoTags = wadoParameters != null && wadoParameters.getHttpTaglist() != null;
         boolean hasWadoLogin = wadoParameters != null && wadoParameters.getWebLogin() != null;

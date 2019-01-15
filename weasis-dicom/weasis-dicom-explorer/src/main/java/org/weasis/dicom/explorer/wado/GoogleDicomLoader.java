@@ -5,6 +5,9 @@ import org.slf4j.LoggerFactory;
 import org.apache.commons.fileupload.MultipartStream;
 import org.weasis.core.api.gui.util.AppProperties;
 
+import com.codeminders.demo.GoogleAPIClient;
+import com.codeminders.demo.GoogleAPIClientFactory;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -17,8 +20,8 @@ public class GoogleDicomLoader {
 
 
     public static File[] downloadFiles(String dicomUrl, String googleToken, boolean useCached) {
-
         try {
+        	googleToken = GoogleAPIClientFactory.getInstance().createGoogleClient().refresh();
             AppProperties.buildAccessibleTempDirectory("downloading");
             HttpURLConnection httpConn = (HttpURLConnection) new URL(dicomUrl).openConnection();
             httpConn.setRequestProperty("Authorization", "Bearer " + googleToken);

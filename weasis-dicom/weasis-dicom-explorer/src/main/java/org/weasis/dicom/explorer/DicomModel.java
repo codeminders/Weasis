@@ -83,7 +83,6 @@ import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomURL;
 import org.weasis.dicom.explorer.wado.LoadSeries;
-import org.weasis.dicom.explorer.wado.GoogleDicomLoader;
 
 @org.osgi.service.component.annotations.Component(immediate = false, property = {
     CommandProcessor.COMMAND_SCOPE + "=dicom", CommandProcessor.COMMAND_FUNCTION + "=get",
@@ -980,9 +979,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         UIManager.subscribeOnViewSelected((url, accessToken) -> {
                     DicomModel.this.googleToken = accessToken;
                     LOADING_EXECUTOR.execute(
-                            new LoadLocalDicom(GoogleDicomLoader.downloadFiles(url,  DicomModel.this.googleToken, true),
-                            false,
-                            DicomModel.this));
+                            new LoadGoogleDicom(url, false, DicomModel.this));
                 }
         );
 

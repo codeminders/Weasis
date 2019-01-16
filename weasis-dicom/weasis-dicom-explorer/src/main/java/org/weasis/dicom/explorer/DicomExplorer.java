@@ -172,6 +172,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         thumnailView.getVerticalScrollBar().setUnitIncrement(16);
         thumnailView.setViewportView(patientContainer);
         changeToolWindowAnchor(getDockable().getBaseLocation());
+
     }
 
     public SeriesSelectionModel getSelectionList() {

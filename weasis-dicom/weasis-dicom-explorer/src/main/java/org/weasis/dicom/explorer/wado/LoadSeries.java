@@ -86,9 +86,6 @@ import org.weasis.dicom.mf.HttpTag;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
 
-import com.codeminders.demo.GoogleAPIClientFactory;
-import com.codeminders.demo.GoogleAuthStub;
-
 public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesImporter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadSeries.class);
@@ -413,8 +410,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         return true;
     }
 
-    private static Map<String, String> getHttpTags(WadoParameters wadoParameters, String token) {
-    	token = GoogleAPIClientFactory.getInstance().createGoogleClient().refresh();
+    private static Map<String, String> getHttpTags(WadoParameters wadoParameters) {
         boolean hasBundleTags = !BundleTools.SESSION_TAGS_FILE.isEmpty();
         boolean hasWadoTags = wadoParameters != null && wadoParameters.getHttpTaglist() != null;
         boolean hasWadoLogin = wadoParameters != null && wadoParameters.getWebLogin() != null;
@@ -429,9 +425,6 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             if (hasWadoLogin) {
                 // Set http login (no protection, only convert in base64)
                 map.put("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
-            }
-            if (token != null) {
-                map.put("Authorization", "Bearer " + token);
             }
             return map;
         }
@@ -488,7 +481,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                             Thumbnail.THUMBNAIL_CACHE_DIR);
                         InputStream httpCon = NetworkUtil.getUrlInputStream(
                             new URL(wadoParameters.getBaseURL() + thumURL).openConnection(),
-                            getHttpTags(wadoParameters, dicomModel.googleToken));
+                            getHttpTags(wadoParameters));
                         FileUtil.writeStreamWithIOException(httpCon, outFile);
                         if (outFile.length() == 0) {
                             throw new IllegalStateException("Thumbnail file is empty"); //$NON-NLS-1$
@@ -561,7 +554,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 + "&objectUID=" + SOPInstanceUID + "&contentType=image/jpeg&imageQuality=70" + "&rows=" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + Thumbnail.MAX_SIZE + "&columns=" + Thumbnail.MAX_SIZE + wadoParameters.getAdditionnalParameters()); //$NON-NLS-1$
 
-        InputStream httpCon = NetworkUtil.getUrlInputStream(url.openConnection(), getHttpTags(wadoParameters, dicomModel.googleToken));
+        InputStream httpCon = NetworkUtil.getUrlInputStream(url.openConnection(), getHttpTags(wadoParameters));
         File outFile = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.debug("Start to download JPEG thbumbnail {} to {}.", url, outFile.getName()); //$NON-NLS-1$
         FileUtil.writeStreamWithIOException(httpCon, outFile);
@@ -657,7 +650,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 buffer.append(TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID());
             }
 
-            return NetworkUtil.getUrlInputStream(new URL(buffer.toString()).openConnection(), getHttpTags(wado, dicomModel.googleToken));
+            return NetworkUtil.getUrlInputStream(new URL(buffer.toString()).openConnection(), getHttpTags(wado));
         }
 
         @Override
@@ -696,7 +689,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             File tempFile = null;
             DicomMediaIO dicomReader = null;
 
-            try (InputStream stream = NetworkUtil.getUrlInputStream(urlConnection, getHttpTags(wado, dicomModel.googleToken))) {
+            try (InputStream stream = NetworkUtil.getUrlInputStream(urlConnection, getHttpTags(wado))) {
 
                 if (!writeInCache && getUrl().startsWith("file:")) { //$NON-NLS-1$
                     cache = false;

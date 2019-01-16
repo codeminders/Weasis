@@ -113,12 +113,12 @@ public class GoogleAPIClient {
 
 	public String getAccessToken() {
 	    if (accessToken == null) {
-	        signIn();
+			refresh();
         }
         return accessToken;
     }
 
-	public void signIn() {
+	public String signIn() {
 		if (!isSignedIn) {
 			int tryCount = 0;
 			Exception error;
@@ -139,24 +139,28 @@ public class GoogleAPIClient {
 					GoogleAuthStub.setAuthToken(accessToken);
 					// run commands
 					tokenInfo(accessToken);
-					userInfo();
 					error = null;
 					isSignedIn = true;
 				} catch(Exception e) {
 					error = e;
 					e.printStackTrace();
-					System.out.println("Retry authorization:");
 				}
 				} while (!isSignedIn && tryCount < 4);
 			if (error != null) {
 				throw new IllegalStateException(error);
 			}
 		}
+		return accessToken;
 	}
 
 	public void signOut() {
 		clearSignIn();
 		isSignedIn = false;
+	}
+	
+	public String refresh() {
+		isSignedIn = false;
+		return signIn();
 	}
 	
 	private void clearSignIn() {
@@ -183,22 +187,14 @@ public class GoogleAPIClient {
 	}
 
 	private static void tokenInfo(String accessToken) throws IOException {
-		System.out.println("Validating token");
 		Tokeninfo tokeninfo = oauth2.tokeninfo().setAccessToken(accessToken).execute();
-		System.out.println(tokeninfo.toString());
 		if (!tokeninfo.getAudience().equals(clientSecrets.getDetails().getClientId())) {
 			System.err.println("ERROR: audience does not match our client ID!");
 		}
 	}
-
-	private static void userInfo() throws IOException {
-		System.out.println("Obtaining User Profile Information");
-		Userinfoplus userinfo = oauth2.userinfo().get().execute();
-		System.out.println(userinfo.toString());
-	}
 	
 	public List<ProjectDescriptor> fetchProjects() throws Exception {
-		signIn();
+		refresh();
 		List<ProjectDescriptor> result = new ArrayList<ProjectDescriptor>();
 		CloudResourceManager.Projects.List request = cloudResourceManager.projects().list();
 	    ListProjectsResponse response;
@@ -220,7 +216,7 @@ public class GoogleAPIClient {
 	}
 	
 	private HttpResponse googleRequest(String url) throws Exception {
-		signIn();
+		refresh();
 		HttpRequest request = httpTransport.createRequestFactory().buildGetRequest(new GenericUrl(url));
 	    HttpHeaders headers = new HttpHeaders();
 	    headers.set("Authorization", Arrays.asList(new String[] {"Bearer " + accessToken}));
@@ -229,7 +225,7 @@ public class GoogleAPIClient {
 	}
 	
 	public List<Location> fetchLocations(ProjectDescriptor project) throws Exception {
-		signIn();
+		refresh();
 		String url = "https://healthcare.googleapis.com/v1alpha/projects/" + project.getId() + "/locations";
 		String data = googleRequest(url).parseAsString();
 		JsonParser parser = new JsonParser();
@@ -244,7 +240,7 @@ public class GoogleAPIClient {
 	}
 	
 	public List<Dataset> fetchDatasets(Location location) throws Exception {
-		signIn();
+		refresh();
 		String url = "https://healthcare.googleapis.com/v1alpha/projects/"+location.getParent().getId()+"/locations/"+location.getId()+"/datasets";
 		String data = googleRequest(url).parseAsString();
 		JsonParser parser = new JsonParser();
@@ -258,7 +254,7 @@ public class GoogleAPIClient {
 	}
 
 	public List<DicomStore> fetchDicomstores(Dataset dataset) throws Exception {
-		signIn();
+		refresh();
 		String url = "https://healthcare.googleapis.com/v1alpha"
                         + "/projects/" + dataset.getProject().getId()
                         + "/locations/" + dataset.getParent().getId()

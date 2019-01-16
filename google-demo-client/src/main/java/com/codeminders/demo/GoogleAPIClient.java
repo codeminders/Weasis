@@ -159,8 +159,11 @@ public class GoogleAPIClient {
 	}
 	
 	public String refresh() {
-		isSignedIn = false;
-		return signIn();
+		if (isSignedIn) {
+			isSignedIn = false;		
+			return signIn();
+		}
+		return accessToken;
 	}
 	
 	private void clearSignIn() {

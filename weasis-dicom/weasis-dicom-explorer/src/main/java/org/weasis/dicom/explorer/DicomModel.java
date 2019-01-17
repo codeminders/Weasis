@@ -979,7 +979,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         UIManager.subscribeOnViewSelected((url, accessToken) -> {
                     DicomModel.this.googleToken = accessToken;
                     LOADING_EXECUTOR.execute(
-                            new LoadGoogleDicom(url, false, DicomModel.this));
+                            new LoadGoogleDicom(url, false, DicomModel.this, accessToken));
                 }
         );
 

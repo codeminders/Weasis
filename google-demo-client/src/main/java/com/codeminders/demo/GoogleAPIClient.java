@@ -113,7 +113,8 @@ public class GoogleAPIClient {
 
 	public String getAccessToken() {
 	    if (accessToken == null) {
-			refresh();
+	    	isSignedIn = false;
+	    	signIn();
         }
         return accessToken;
     }
@@ -163,7 +164,7 @@ public class GoogleAPIClient {
 			isSignedIn = false;		
 			return signIn();
 		}
-		return accessToken;
+		return getAccessToken();
 	}
 	
 	private void clearSignIn() {

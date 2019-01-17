@@ -1,13 +1,11 @@
 package org.weasis.dicom.explorer;
 
-import com.codeminders.demo.GoogleAPIClientFactory;
 import org.apache.commons.fileupload.MultipartStream;
 import org.dcm4che3.data.Tag;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.*;
 import org.weasis.core.api.util.FileUtil;
@@ -24,7 +22,6 @@ import org.weasis.dicom.codec.TagD.Level;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -34,16 +31,18 @@ import java.util.stream.Collectors;
 public class LoadGoogleDicom extends ExplorerTask<Boolean, String> {
 
     private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(LoadGoogleDicom.class);
+    private final String accessToken;
     private File[] files;
     private final String url;
     private final DicomModel dicomModel;
     private final boolean recursive;
     private boolean openPlugin;
-    private static final Map<String,File[]> cache = new HashMap<>();
+    private static final Map<String,File[]> fileCache = new HashMap<>();
+    private static final Map<String,Series> seriesCache = new HashMap<>();
     public static final File DICOM_TMP_DIR = AppProperties.buildAccessibleTempDirectory("gcp_cache"); //$NON-NLS-1$
 
 
-    public LoadGoogleDicom(String url, boolean recursive, DataExplorerModel explorerModel) {
+    public LoadGoogleDicom(String url, boolean recursive, DataExplorerModel explorerModel, String accessToken) {
         super(Messages.getString("DicomExplorer.loading"), false); //$NON-NLS-1$
         if (url == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
@@ -52,6 +51,7 @@ public class LoadGoogleDicom extends ExplorerTask<Boolean, String> {
         this.url = url;
         this.recursive = recursive;
         this.openPlugin = true;
+        this.accessToken = accessToken;
     }
 
 
@@ -60,13 +60,20 @@ public class LoadGoogleDicom extends ExplorerTask<Boolean, String> {
         dicomModel
             .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
 
-        if (cache.containsKey(url)) {
-            LOGGER.info("Loading from cache");
-            files = cache.get(url);
+        if (fileCache.containsKey(url)) {
+            LOGGER.info("Loading from local cache");
+            files = fileCache.get(url);
+            Series dicomSeries = seriesCache.get(url);
+            SeriesViewerFactory plugin = UIManager.getViewerFactory(dicomSeries.getMimeType());
+            if (plugin!= null) {
+                ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel, true, true);
+            }
+            return true;
+
         } else {
-            LOGGER.info("Loading from Google");
-            files = downloadFiles(url, GoogleAPIClientFactory.getInstance().createGoogleClient().refresh());
-            cache.put(url, files);
+            LOGGER.info("Loading from Google Healthcare API");
+            files = downloadFiles(url, accessToken);
+            fileCache.put(url, files);
         }
         LOGGER.info(Arrays.stream(files).map(f -> f.getName()).collect(Collectors.joining("\n")) );
         addSelectionAndnotify(files, true);
@@ -77,12 +84,11 @@ public class LoadGoogleDicom extends ExplorerTask<Boolean, String> {
     protected void done() {
         dicomModel
             .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
-        LOGGER.info("End of loading DICOM locally"); //$NON-NLS-1$
+        LOGGER.info("End of loading DICOM from Google Healthcare API"); //$NON-NLS-1$
     }
 
     public void addSelectionAndnotify(File[] file, boolean firstLevel) {
         if (file == null || file.length < 1) {
-            LOGGER.info(" file == null: Exiting addSelectionAndnotify" );
             return;
         }
         final ArrayList<SeriesThumbnail> thumbs = new ArrayList<>();
@@ -90,7 +96,7 @@ public class LoadGoogleDicom extends ExplorerTask<Boolean, String> {
 
         for (int i = 0; i < file.length; i++) {
             if (isCancelled()) {
-                LOGGER.info("Cancelled, returning");
+                LOGGER.debug("Cancelled, returning");
                 return;
             }
 
@@ -101,13 +107,10 @@ public class LoadGoogleDicom extends ExplorerTask<Boolean, String> {
                     folders.add(file[i]);
                 }
             } else {
-                LOGGER.info("file is not null, continue");
                 if (file[i].canRead()) {
                     if (FileUtil.isFileExtensionMatching(file[i], DicomCodec.FILE_EXTENSIONS)
                         || MimeInspector.isMatchingMimeTypeFromMagicNumber(file[i], DicomMediaIO.MIMETYPE)) {
                         DicomMediaIO loader = new DicomMediaIO(file[i]);
-                        LOGGER.info("DicomMediaIO loader={}", loader);
-                        LOGGER.info("loader.isReadableDicom={}", loader.isReadableDicom());
                         if (loader.isReadableDicom()) {
                             // Issue: must handle adding image to viewer and building thumbnail (middle image)
                             SeriesThumbnail t = buildDicomStructure(loader, openPlugin);
@@ -125,13 +128,6 @@ public class LoadGoogleDicom extends ExplorerTask<Boolean, String> {
                 }
             }
         }
-//        for (final SeriesThumbnail t : thumbs) {
-//            MediaSeries<MediaElement> series = t.getSeries();
-//            // Avoid to rebuild most of CR series thumbnail
-//            if (series != null && series.size(null) > 2) {
-//                GuiExecutor.instance().execute(t::reBuildThumbnail);
-//            }
-//        }
         for (int i = 0; i < folders.size(); i++) {
             addSelectionAndnotify(folders.get(i).listFiles(), false);
         }
@@ -208,14 +204,12 @@ public class LoadGoogleDicom extends ExplorerTask<Boolean, String> {
                         new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
                 }
 
-                LOGGER.info("open is ={}", open);
                 if (open) {
                     SeriesViewerFactory plugin = UIManager.getViewerFactory(dicomSeries.getMimeType());
-                    LOGGER.info("plugin is={}", plugin);
                     if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                         openPlugin = false;
-                        LOGGER.info("Opening Sequence in plugin...");
-                        ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel, false, true);
+                        seriesCache.put(url, dicomSeries);
+                        ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel, true, true);
                     } else if (plugin != null) {
                         // Send event to select the related patient in Dicom Explorer.
                         dicomModel.firePropertyChange(
@@ -224,7 +218,6 @@ public class LoadGoogleDicom extends ExplorerTask<Boolean, String> {
                 }
             } else {
                 // Test if SOPInstanceUID already exists
-                LOGGER.info("Testing if SOPInstanceUID already exists");
                 if (isSOPInstanceUIDExist(study, dicomSeries, seriesUID,
                     TagD.getTagValue(dicomReader, Tag.SOPInstanceUID, String.class))) {
                     return null;
@@ -294,41 +287,40 @@ public class LoadGoogleDicom extends ExplorerTask<Boolean, String> {
     }
 
 
-
     public static File[] downloadFiles(String dicomUrl, String googleToken) {
         try {
-            AppProperties.buildAccessibleTempDirectory("gcp_cache");
             HttpURLConnection httpConn = (HttpURLConnection) new URL(dicomUrl).openConnection();
             httpConn.setRequestProperty("Authorization", "Bearer " + googleToken);
             int responseCode = httpConn.getResponseCode();
-            LOGGER.info("responseCode={}", responseCode);
-            String contentType = httpConn.getContentType();
 
-            LOGGER.info("contentType={}", contentType);
-            int index = contentType.indexOf("boundary=");
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                String contentType = httpConn.getContentType();
+                int index = contentType.indexOf("boundary=");
+                String boundary = contentType.substring(index + 10, contentType.length() - 1);
 
-            String boundary = contentType.substring(index + 10, contentType.length() - 1);
-            LOGGER.info("boundary={}", boundary);
+                MultipartStream multipart = new MultipartStream(httpConn.getInputStream(), boundary.getBytes());
+                boolean nextPart = multipart.skipPreamble();
 
-            MultipartStream multipart = new MultipartStream(httpConn.getInputStream(), boundary.getBytes());
-            boolean nextPart = multipart.skipPreamble();
+                ArrayList<File> files = new ArrayList<>();
+                long start = System.currentTimeMillis();
+                while (nextPart) {
+                    File outFile = File.createTempFile("gcp_", ".dcm", getDicomTmpDir()); //$NON-NLS-1$ //$NON-NLS-2$
+                    String header = multipart.readHeaders();
+                    LOGGER.info(header);// process headers
 
-            ArrayList<File> files = new ArrayList<>();
-            long start = System.currentTimeMillis();
-            while (nextPart) {
-                File outFile = File.createTempFile("gcp_", ".dcm", getDicomTmpDir()); //$NON-NLS-1$ //$NON-NLS-2$
-                files.add(outFile);
-                String header = multipart.readHeaders();
-                LOGGER.info(header);// process headers
-
-                OutputStream output = new FileOutputStream(outFile);
-                multipart.readBodyData(output);
-                output.close();
-                nextPart = multipart.readBoundary();
+                    try (OutputStream output = new FileOutputStream(outFile)) {
+                        multipart.readBodyData(output);
+                    }
+                    files.add(outFile);
+                    nextPart = multipart.readBoundary();
+                }
+                LOGGER.debug("Elapsed time: {} ", System.currentTimeMillis() - start);
+                return files.toArray(new File[0]);
+            } else {
+                throw new RuntimeException("Error processing HTTP request. Response code: " + responseCode);
             }
-            LOGGER.info("Elapsed time: {} ", System.currentTimeMillis() - start);
-            return files.stream().toArray(File[]::new);
-        } catch (IOException e) {
+        } catch (Exception e) {
+            LOGGER.error("Error occured ", e);
             e.printStackTrace();
             throw new RuntimeException(e);
         }
@@ -342,5 +334,4 @@ public class LoadGoogleDicom extends ExplorerTask<Boolean, String> {
         }
         return DICOM_TMP_DIR;
     }
-
 }

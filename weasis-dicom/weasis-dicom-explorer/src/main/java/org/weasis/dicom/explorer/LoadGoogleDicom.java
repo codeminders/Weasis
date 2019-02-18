@@ -295,8 +295,13 @@ public class LoadGoogleDicom extends ExplorerTask<Boolean, String> {
 
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 String contentType = httpConn.getContentType();
-                int index = contentType.indexOf("boundary=");
-                String boundary = contentType.substring(index + 10, contentType.length() - 1);
+                //find multipart boundary of multipart/related response
+                int indexStart = contentType.indexOf("boundary=") + 9;
+                int indexEnd = contentType.indexOf(";", indexStart + 1);
+                if (indexEnd == -1) {
+                    indexEnd = contentType.length() - 1;
+                }
+                String boundary = contentType.substring(indexStart, indexEnd);
 
                 MultipartStream multipart = new MultipartStream(httpConn.getInputStream(), boundary.getBytes());
                 boolean nextPart = multipart.skipPreamble();

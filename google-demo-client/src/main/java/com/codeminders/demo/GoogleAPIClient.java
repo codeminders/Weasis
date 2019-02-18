@@ -20,7 +20,6 @@ import com.google.api.services.cloudresourcemanager.model.ListProjectsResponse;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.oauth2.Oauth2;
 import com.google.api.services.oauth2.model.Tokeninfo;
-import com.google.api.services.oauth2.model.Userinfoplus;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -34,15 +33,12 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class GoogleAPIClient {
-	/**
-	 * Be sure to specify the name of your application. If the application name is
-	 * {@code null} or blank, the application will log a warning. Suggested format
-	 * is "MyCompany-ProductName/1.0".
-	 */
-	private static final String APPLICATION_NAME = "Codeminders-GoogleHealthViewerDemo/1.0";
+
+	private static final String APPLICATION_NAME = "Weasis-GoogleDICOMExplorer/1.0";
 
 	/** Directory to store user credentials. */
 	private static final java.io.File DATA_STORE_DIR = new java.io.File(System.getProperty("user.home"),".store/google_viewer_auth");
+	private static final String HEALTHCARE_API_VERSION = "v1alpha2";
 
 	/**
 	 * Global instance of the {@link DataStoreFactory}. The best practice is to make
@@ -230,7 +226,7 @@ public class GoogleAPIClient {
 	
 	public List<Location> fetchLocations(ProjectDescriptor project) throws Exception {
 		refresh();
-		String url = "https://healthcare.googleapis.com/v1alpha/projects/" + project.getId() + "/locations";
+		String url = "https://healthcare.googleapis.com/" + HEALTHCARE_API_VERSION + "/projects/" + project.getId() + "/locations";
 		String data = googleRequest(url).parseAsString();
 		JsonParser parser = new JsonParser();
 		JsonElement jsonTree = parser.parse(data);
@@ -245,7 +241,7 @@ public class GoogleAPIClient {
 	
 	public List<Dataset> fetchDatasets(Location location) throws Exception {
 		refresh();
-		String url = "https://healthcare.googleapis.com/v1alpha/projects/"+location.getParent().getId()+"/locations/"+location.getId()+"/datasets";
+		String url = "https://healthcare.googleapis.com/" + HEALTHCARE_API_VERSION + "/projects/" +location.getParent().getId()+"/locations/"+location.getId()+"/datasets";
 		String data = googleRequest(url).parseAsString();
 		JsonParser parser = new JsonParser();
 		JsonElement jsonTree = parser.parse(data);
@@ -259,7 +255,7 @@ public class GoogleAPIClient {
 
 	public List<DicomStore> fetchDicomstores(Dataset dataset) throws Exception {
 		refresh();
-		String url = "https://healthcare.googleapis.com/v1alpha"
+		String url = "https://healthcare.googleapis.com/" + HEALTHCARE_API_VERSION
                         + "/projects/" + dataset.getProject().getId()
                         + "/locations/" + dataset.getParent().getId()
                         + "/datasets/" + dataset.getName() + "/dicomStores";
@@ -276,7 +272,7 @@ public class GoogleAPIClient {
 	}
 
 	public static String getImageUrl(DicomStore store, String studyId) {
-        return "https://healthcare.googleapis.com/v1alpha"
+        return "https://healthcare.googleapis.com/" + HEALTHCARE_API_VERSION
                 + "/projects/" + store.getProject().getId()
                 + "/locations/" + store.getLocation().getId()
                 + "/datasets/" + store.getParent().getName()

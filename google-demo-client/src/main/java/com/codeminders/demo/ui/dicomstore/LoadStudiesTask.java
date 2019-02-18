@@ -29,7 +29,7 @@ import static java.util.stream.Collectors.toList;
 public class LoadStudiesTask extends AbstractDicomSelectorTask<List<StudyView>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadStudiesTask.class);
-    private static final String GOOGLE_API_BASE_PATH = "https://healthcare.googleapis.com/v1alpha/";
+    private static final String GOOGLE_API_BASE_PATH = "https://healthcare.googleapis.com/v1alpha2/";
     private static final String DICOM_WEB_STUDIES = "/dicomWeb/studies";
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");

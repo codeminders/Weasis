@@ -22,5 +22,6 @@
 		<module>weasis-dicom-send</module>
 		<module>weasis-dicom-qr</module>
 		<module>weasis-dicom-rt</module>
+		<module>google-dicom-explorer</module>
 	</modules>
 </project>

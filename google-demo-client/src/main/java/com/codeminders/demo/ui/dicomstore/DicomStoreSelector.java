@@ -11,11 +11,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
+import javax.swing.plaf.basic.BasicComboBoxEditor;
+import javax.swing.plaf.basic.BasicComboPopup;
+
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -33,6 +38,7 @@ public class DicomStoreSelector extends JPanel {
     private static final String TEXT_GOOGLE_SIGN_OUT = "Google Sign Out";
     private static final String ACTION_SIGN_IN = "signIn";
     private static final String ACTION_SIGN_OUT = "signOut";
+	private static final String DEFAULT_PROJECT_COMBOBOX_TEXT = "-- Choose or type project --";
 
     private final GoogleAPIClient googleAPIClient;
 
@@ -42,6 +48,8 @@ public class DicomStoreSelector extends JPanel {
     private final DefaultComboBoxModel<Optional<DicomStore>> modelDicomstore = new DefaultComboBoxModel<>();
 
     private final StudiesTable table;
+    private List<ProjectDescriptor> projects;
+    private final JProjectComboBox<Optional<ProjectDescriptor>> googleProjectCombobox = new JProjectComboBox<>(modelProject);
     
     private void processSignedIn(JButton googleAuthButton) {
     	googleAPIClient.signIn();
@@ -51,12 +59,12 @@ public class DicomStoreSelector extends JPanel {
     }
 
     public DicomStoreSelector(GoogleAPIClient googleAPIClient, StudiesTable table) {
+		UIManager.getLookAndFeelDefaults().put("ComboBox.noActionOnKeyNavigation", true);
         this.googleAPIClient = googleAPIClient;
         this.table = table;
         BoxLayout layout = new BoxLayout(this, BoxLayout.X_AXIS);
         setLayout(layout);
 
-        JComboBox<Optional<ProjectDescriptor>> googleProjectCombobox = new JComboBox<>(modelProject);
         JComboBox<Optional<Location>> googleLocationCombobox = new JComboBox<>(modelLocation);
         JComboBox<Optional<Dataset>> googleDatasetCombobox = new JComboBox<>(modelDataset);
         JComboBox<Optional<DicomStore>> googleDicomstoreCombobox = new JComboBox<>(modelDicomstore);
@@ -115,6 +123,30 @@ public class DicomStoreSelector extends JPanel {
             new LoadProjectsTask(googleAPIClient, DicomStoreSelector.this).execute();
             return true;
         });
+        
+        googleProjectCombobox.setEditable(true);
+        googleProjectCombobox.setEditor(new JProjectComboBoxEditor(DEFAULT_PROJECT_COMBOBOX_TEXT));
+		googleProjectCombobox.getEditor().getEditorComponent().addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				if (googleProjectCombobox.firstFocusGain) {
+					((JTextField)googleProjectCombobox.getEditor().getEditorComponent()).setText("");
+					googleProjectCombobox.firstFocusGain = false;
+				}
+				super.mousePressed(e);
+			}
+		});
+		googleProjectCombobox.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent arg0) {
+				JTextField textField = (JTextField)googleProjectCombobox.getEditor().getEditorComponent();
+				if (googleProjectCombobox.firstFocusGain) {
+					textField.setText(textField.getText().replaceAll(DEFAULT_PROJECT_COMBOBOX_TEXT, ""));
+					googleProjectCombobox.firstFocusGain = false;
+				}
+				googleProjectCombobox.search(textField.getText()); 
+			}
+		});
 
         googleLocationCombobox.addItemListener(this.<Location>selectedListener(
                 location -> new LoadDatasetsTask(location, googleAPIClient, this),
@@ -163,6 +195,7 @@ public class DicomStoreSelector extends JPanel {
     }
 
     public void updateProjects(List<ProjectDescriptor> result) {
+    	projects = result;
         if (updateModel(result, modelProject)) {
             updateLocations(emptyList());
         }
@@ -286,4 +319,56 @@ public class DicomStoreSelector extends JPanel {
             return renderer;
         }
     }
+    
+    private class JProjectComboBoxEditor extends BasicComboBoxEditor {
+    	public JProjectComboBoxEditor(String defaultText) {
+    		editor.setText(defaultText);
+		}
+    	
+        public void setItem(Object anObject) {
+        	Optional<ProjectDescriptor> item = (Optional<ProjectDescriptor>) anObject;
+        	if (item != null && item.isPresent()) {
+        		editor.setText(item.get().getName());
+        	}
+        }
+    }
+    
+	private class JProjectComboBox<T> extends JComboBox<T> {
+		
+		private static final long serialVersionUID = 450383631220222610L;
+		private boolean firstFocusGain = true;
+
+		public JProjectComboBox(DefaultComboBoxModel<T> model) {
+			super(model);
+		}
+		
+        public void search(String input) {
+            removeAllItems();
+            List<ProjectDescriptor> updated = new ArrayList<>();
+            for (int i=0;i<projects.size();i++) {
+            	ProjectDescriptor item = projects.get(i);
+            	if (item.getName().toLowerCase().startsWith(input.toLowerCase())) {
+            		updated.add(item);
+            	}
+            }
+            updateModel(updated, modelProject);
+            if (getModel().getSize() == 0) {
+                this.setPopupVisible(false);
+                return;
+            }
+            this.setPopupVisible(true);
+            BasicComboPopup popup = (BasicComboPopup)this.getAccessibleContext().getAccessibleChild(0);
+            Window popupWindow = SwingUtilities.windowForComponent(popup);
+            Window comboWindow = SwingUtilities.windowForComponent(this);
+
+            if (comboWindow.equals(popupWindow)) {
+                Component c = popup.getParent();
+                Dimension d = c.getPreferredSize();
+                c.setSize(d);
+            } else {
+                popupWindow.pack();
+            }
+        }
+    }
+
 }

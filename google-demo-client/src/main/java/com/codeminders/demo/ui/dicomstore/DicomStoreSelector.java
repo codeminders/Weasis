@@ -347,7 +347,7 @@ public class DicomStoreSelector extends JPanel {
             List<ProjectDescriptor> updated = new ArrayList<>();
             for (int i=0;i<projects.size();i++) {
             	ProjectDescriptor item = projects.get(i);
-            	if (item.getName().toLowerCase().startsWith(input.toLowerCase())) {
+            	if (item.getName().toLowerCase().contains(input.toLowerCase())) {
             		updated.add(item);
             	}
             }

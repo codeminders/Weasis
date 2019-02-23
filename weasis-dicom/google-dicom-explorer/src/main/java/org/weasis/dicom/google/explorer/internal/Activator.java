@@ -16,7 +16,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.ui.docking.UIManager;
-//import org.weasis.dicom.explorer.DicomExplorer;
+//import org.weasis.dicom.explorer.GoogleDicomExplorer;
 //import org.weasis.dicom.explorer.DicomModel;
 //import org.weasis.dicom.explorer.wado.DicomManager;
 
@@ -41,9 +41,9 @@ public class Activator implements BundleActivator {
 //            IMPORT_EXPORT_PERSISTENCE, null);
 //        // Save preferences
 //        DicomManager.getInstance().savePreferences();
-//        DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-//        if (explorer instanceof DicomExplorer) {
-//            DicomExplorer dexp = (DicomExplorer) explorer;
+//        DataExplorerView explorer = UIManager.getExplorerplugin(GoogleDicomExplorer.NAME);
+//        if (explorer instanceof GoogleDicomExplorer) {
+//            GoogleDicomExplorer dexp = (GoogleDicomExplorer) explorer;
 //            // Remove image in viewers, in image cache and close the image stream
 //            ((DicomModel) dexp.getDataExplorerModel()).dispose();
 //        }

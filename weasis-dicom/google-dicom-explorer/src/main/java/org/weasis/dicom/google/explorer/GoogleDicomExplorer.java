@@ -7,6 +7,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.dicom.google.api.ui.MainPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,6 +29,7 @@ public class GoogleDicomExplorer extends PluginTool implements DataExplorerView,
         super(NAME, BUTTON_NAME, POSITION.WEST, null,//ExtendedMode.NORMALIZED,
                 PluginTool.Type.EXPLORER, 120);
         setLayout(new BorderLayout());
+        add( new MainPanel(new JPanel()));
         setDockableWidth(500);
         dockable.setMaximizable(true);
         dockable.setMinimizable(true);
@@ -38,7 +40,7 @@ public class GoogleDicomExplorer extends PluginTool implements DataExplorerView,
 
     @Override
     public void dispose() {
-
+        super.closeDockable();
     }
 
     @Override

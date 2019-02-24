@@ -16,17 +16,17 @@ import java.util.List;
 
 public class GoogleDicomExplorer extends PluginTool implements DataExplorerView, SeriesViewerListener {
 
+    public static final String NAME = Messages.getString("GoogleDicomExplorer.title"); //$NON-NLS-1$
+    public static final String BUTTON_NAME = Messages.getString("GoogleDicomExplorer.btn_title"); //$NON-NLS-1$
+    public static final String DESCRIPTION = Messages.getString("GoogleDicomExplorer.desc"); //$NON-NLS-1$
+
     public GoogleDicomExplorer(String id, String toolName, Type type, int position) {
         super(id, toolName, type, position);
     }
 
     public GoogleDicomExplorer() {
-        super("GOOGLEDICOM",
-                "Google Healthcare Explorer",
-                POSITION.WEST,
-                null,//ExtendedMode.NORMALIZED,
-                PluginTool.Type.EXPLORER,
-                120);
+        super(NAME, BUTTON_NAME, POSITION.WEST, null,//ExtendedMode.NORMALIZED,
+                PluginTool.Type.EXPLORER, 120);
         setLayout(new BorderLayout());
         setDockableWidth(500);
         dockable.setMaximizable(true);
@@ -73,12 +73,17 @@ public class GoogleDicomExplorer extends PluginTool implements DataExplorerView,
 
     @Override
     public String getUIName() {
-        return null;
+        return NAME;
+    }
+
+    @Override
+    public String toString() {
+        return NAME;
     }
 
     @Override
     public String getDescription() {
-        return null;
+        return DESCRIPTION;
     }
 
     @Override

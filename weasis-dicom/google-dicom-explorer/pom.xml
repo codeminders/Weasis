@@ -31,7 +31,12 @@
                 <configuration>
                     <instructions>
                         <Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
-                        <Import-Package>*;resolution:=optional</Import-Package>
+                        <Import-Package>javax.portlet;resolution:=optional,
+                            org.apache.avalon.*;resolution:=optional,
+                            org.apache.log.*;resolution:=optional,
+                            org.apache.log4j.*;resolution:=optional,
+                            *
+                        </Import-Package>
                         <Embed-Dependency>*;scope=compile;inline=true</Embed-Dependency>
                         <Embed-Transitive>true</Embed-Transitive>
                     </instructions>

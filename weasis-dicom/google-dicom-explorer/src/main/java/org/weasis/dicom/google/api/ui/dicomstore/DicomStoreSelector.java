@@ -277,7 +277,7 @@ public class DicomStoreSelector extends JPanel {
 
     private <T> ItemListener selectedListener(Function<T, SwingWorker<?, ?>> taskFactory, Consumer<Void> onEmpty) {
         return e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
+            if (e.getStateChange() == ItemEvent.SELECTED && e.getItem().getClass().equals(Optional.class)) {
                 Optional<T> item = (Optional<T>) e.getItem();
 
                 if (!item.isPresent()) {
@@ -326,9 +326,11 @@ public class DicomStoreSelector extends JPanel {
         }
 
         public void setItem(Object anObject) {
-            Optional<ProjectDescriptor> item = (Optional<ProjectDescriptor>) anObject;
-            if (item != null && item.isPresent()) {
-                editor.setText(item.get().getName());
+            if (anObject != null) {  
+                Optional<ProjectDescriptor> item = anObject.getClass().equals(String.class) ? Optional.empty() : (Optional<ProjectDescriptor>) anObject;
+            	if (item.isPresent()) {
+                    editor.setText(item.get().getName());
+            	}
             }
         }
     }
@@ -337,12 +339,16 @@ public class DicomStoreSelector extends JPanel {
 
         private static final long serialVersionUID = 450383631220222610L;
         private boolean firstFocusGain = true;
+        private String prevInput = "";
 
         public JProjectComboBox(DefaultComboBoxModel<T> model) {
             super(model);
         }
 
         public void search(String input) {
+        	if ((input == null && prevInput == null) || (input.toLowerCase().equals(prevInput.toLowerCase()))) {
+        		return;
+        	}
             removeAllItems();
             List<ProjectDescriptor> updated = new ArrayList<>();
             for (int i = 0; i < projects.size(); i++) {
@@ -351,8 +357,9 @@ public class DicomStoreSelector extends JPanel {
                     updated.add(item);
                 }
             }
+            prevInput = input;
             updateModel(updated, modelProject);
-            if (getModel().getSize() == 0) {
+            if (updated.isEmpty() || (updated.size() == 1 && updated.get(0).equals(input))) {
                 this.setPopupVisible(false);
                 return;
             }

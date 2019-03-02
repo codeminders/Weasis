@@ -2,6 +2,7 @@ package org.weasis.dicom.google.api.ui;
 
 import org.weasis.dicom.google.api.GoogleAPIClient;
 import org.weasis.dicom.google.api.ui.dicomstore.DicomStoreSelector;
+import org.weasis.dicom.google.explorer.DownloadManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,7 +53,8 @@ public class GoogleExplorer extends JPanel {
     public void fireStudySelected(String studyId) {
         storeSelector.getCurrentStore()
                 .map(store -> GoogleAPIClient.getImageUrl(store, studyId))
-                .ifPresent(image -> studySelectedListener.forEach(listener -> listener.accept(image, googleAPIClient.getAccessToken())));
+                .ifPresent(image -> DownloadManager.getLoadingExecutor().submit(
+                        new DownloadManager.LoadGoogleDicom(image,  null, googleAPIClient.getAccessToken())));
     }
 
     public void subscribeStudySelected(BiConsumer<String, String> consumer) {

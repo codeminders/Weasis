@@ -22,7 +22,7 @@ public class GoogleDicomExplorer extends PluginTool implements DataExplorerView,
     public static final String NAME = Messages.getString("GoogleDicomExplorer.title"); //$NON-NLS-1$
     public static final String BUTTON_NAME = Messages.getString("GoogleDicomExplorer.btn_title"); //$NON-NLS-1$
     public static final String DESCRIPTION = Messages.getString("GoogleDicomExplorer.desc"); //$NON-NLS-1$
-    
+
     private final GoogleExplorer explorer;
 
     private final GoogleAPIClient googleAPIClient = GoogleAPIClientFactory.getInstance().createGoogleClient();
@@ -31,7 +31,7 @@ public class GoogleDicomExplorer extends PluginTool implements DataExplorerView,
         super(NAME, BUTTON_NAME, POSITION.WEST, null,//ExtendedMode.NORMALIZED,
                 PluginTool.Type.EXPLORER, 120);
         setLayout(new BorderLayout());
-        
+
         explorer = new GoogleExplorer(googleAPIClient);
         add(explorer);
         setDockableWidth(500);

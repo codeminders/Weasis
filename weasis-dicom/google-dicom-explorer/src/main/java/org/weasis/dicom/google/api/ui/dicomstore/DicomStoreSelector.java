@@ -93,6 +93,8 @@ public class DicomStoreSelector extends JPanel {
                 modelDataset.removeAllElements();
                 modelDicomstore.removeAllElements();
                 table.clearTable();
+                JTextField textField = (JTextField) googleProjectCombobox.getEditor().getEditorComponent();
+                textField.setText("");
             }
         });
 
@@ -197,6 +199,9 @@ public class DicomStoreSelector extends JPanel {
     public void updateProjects(List<ProjectDescriptor> result) {
         projects = result;
         if (updateModel(result, modelProject)) {
+        	googleProjectCombobox.firstFocusGain = true;
+            JTextField textField = (JTextField) googleProjectCombobox.getEditor().getEditorComponent();
+            textField.setText(DEFAULT_PROJECT_COMBOBOX_TEXT);
             updateLocations(emptyList());
         }
     }

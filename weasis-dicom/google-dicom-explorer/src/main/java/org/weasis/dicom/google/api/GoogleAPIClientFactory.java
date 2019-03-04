@@ -6,10 +6,6 @@ public class GoogleAPIClientFactory {
 
     private GoogleAPIClient googleAPIClient;
 
-    /**
-     * TODO: Probably it should be refactored, so this class become OSGi component.
-     * GetInstance method should be removed after that.
-     */
     public static GoogleAPIClientFactory getInstance() {
         if (instance == null) {
             instance = new GoogleAPIClientFactory();

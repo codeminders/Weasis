@@ -22,8 +22,6 @@ public class GoogleDicomExplorerFactory implements DataExplorerViewFactory {
     public DataExplorerView createDataExplorerView(Hashtable<String, Object> properties) {
         if (explorer == null) {
             explorer = new GoogleDicomExplorer();
-//            UIManager.EXPLORER_PLUGIN_TOOLBARS.add(new ImportToolBar(5, explorer));
-//            UIManager.EXPLORER_PLUGIN_TOOLBARS.add(new ExportToolBar(7, explorer));
             ViewerPluginBuilder.DefaultDataModel.firePropertyChange(
                     new ObservableEvent(ObservableEvent.BasicAction.NULL_SELECTION, explorer, null, null));
         }
@@ -43,10 +41,5 @@ public class GoogleDicomExplorerFactory implements DataExplorerViewFactory {
     @Deactivate
     protected void deactivate(ComponentContext context) {
         LOGGER.info("Deactivate the Google Healthcare DataExplorerView");
-//        if (explorer != null) {
-//            DataExplorerModel dataModel = explorer.getDataExplorerModel();
-//            dataModel.removePropertyChangeListener(explorer);
-//            UIManager.EXPLORER_PLUGIN_TOOLBARS.removeIf(b -> b.getComponent().getAttachedInsertable() == explorer);
-//        }
     }
 }

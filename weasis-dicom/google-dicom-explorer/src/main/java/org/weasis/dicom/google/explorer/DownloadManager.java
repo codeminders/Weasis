@@ -33,6 +33,10 @@ public class DownloadManager {
         return LOADING_EXECUTOR;
     }
 
+    public interface DownloadListener {
+    	public void downloadFinished();
+    }
+    
     public static class LoadGoogleDicom extends SwingWorker<Boolean, Void> {
 
         private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(LoadGoogleDicom.class);
@@ -42,12 +46,14 @@ public class DownloadManager {
         private final FileModel dicomModel;
         private static final Map<String, File[]> fileCache = new HashMap<>();
         public static final File DICOM_TMP_DIR = AppProperties.buildAccessibleTempDirectory("gcp_cache"); //$NON-NLS-1$
+        private DownloadListener downloadListener;
 
 
-        public LoadGoogleDicom(String url, DataExplorerModel explorerModel, String accessToken) {
+        public LoadGoogleDicom(String url, DataExplorerModel explorerModel, String accessToken, DownloadListener listener) {
             this.url = url;
             this.dicomModel = ViewerPluginBuilder.DefaultDataModel;
             this.accessToken = accessToken;
+            this.downloadListener = listener;
         }
 
         @Override
@@ -72,6 +78,7 @@ public class DownloadManager {
         @Override
         protected void done() {
             LOGGER.info("End of loading DICOM from Google Healthcare API"); //$NON-NLS-1$
+            downloadListener.downloadFinished();
         }
 
         public void addSelectionAndnotify(File[] file) {

@@ -49,12 +49,20 @@ public class GoogleExplorer extends JPanel {
 
         return panel;
     }
-
+    
     public void fireStudySelected(String studyId) {
         storeSelector.getCurrentStore()
                 .map(store -> GoogleAPIClient.getImageUrl(store, studyId))
-                .ifPresent(image -> DownloadManager.getLoadingExecutor().submit(
-                        new DownloadManager.LoadGoogleDicom(image,  null, googleAPIClient.getAccessToken())));
+                .ifPresent(image -> {
+                	DownloadManager.getLoadingExecutor().submit(
+                        new DownloadManager.LoadGoogleDicom(image,  null, googleAPIClient.getAccessToken(), new DownloadManager.DownloadListener() {
+							@Override
+							public void downloadFinished() {
+								table.hideLoadIcon(studyId);
+							}
+						}));
+                	table.showLoadIcon(studyId);
+                });
     }
 
     public void subscribeStudySelected(BiConsumer<String, String> consumer) {

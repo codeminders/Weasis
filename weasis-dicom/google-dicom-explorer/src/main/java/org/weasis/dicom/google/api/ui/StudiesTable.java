@@ -5,9 +5,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.ImageObserver;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -39,7 +42,7 @@ public class StudiesTable extends JPanel {
             @Override
             public Class<?> getColumnClass(int columnIndex) {
             	if (columnIndex == 0) {
-            		return Icon.class;
+            		return ImageIcon.class;
             	}
             	return super.getColumnClass(columnIndex);
             }
@@ -69,6 +72,43 @@ public class StudiesTable extends JPanel {
         });
     }
     
+    private void setImageObserver(JTable table) {
+        TableModel model = table.getModel();
+        int rowCount = model.getRowCount();
+        int col = 0;
+        if (ImageIcon.class == model.getColumnClass(col)) {
+            for (int row = 0; row < rowCount; row++) {
+                Object obj = model.getValueAt(row, col);
+                ImageIcon icon = null;
+                if (obj instanceof ImageIcon) {
+                    icon = (ImageIcon) model.getValueAt(row, col);
+                }
+                if (icon != null && icon.getImageObserver() == null) {
+               		icon.setImageObserver(new CellImageObserver(table, row, col));
+                }
+            }
+        }
+    }
+
+    class CellImageObserver implements ImageObserver {
+        JTable table;
+        int row;
+        int col;
+
+        CellImageObserver(JTable table, int row, int col) {
+            this.table = table;
+            this.row = row;
+            this.col = col;
+        }
+
+        public boolean imageUpdate(Image img, int flags, int x, int y, int w, int h) {
+            if ((flags & (FRAMEBITS | ALLBITS)) != 0) {
+                table.repaint();
+            }
+            return (flags & (ALLBITS | ABORT)) == 0;
+        }
+    }
+    
     public void showLoadIcon(String studyId) {
     	for (int i=0;i < studies.size();i++) {
     		if (studies.get(i).getStudyId() == studyId) {
@@ -76,6 +116,7 @@ public class StudiesTable extends JPanel {
 		    	break;
     		}
     	}
+        setImageObserver(table);
     }
 
     public void hideLoadIcon(String studyId) {
@@ -85,6 +126,7 @@ public class StudiesTable extends JPanel {
 		    	break;
     		}
     	}
+        setImageObserver(table);
     }
 
     public void addStudy(StudyView study) {

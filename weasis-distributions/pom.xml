@@ -373,6 +373,12 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.dicom</groupId>
+									<artifactId>google-dicom-explorer</artifactId>
+									<version>${app.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-viewer2d</artifactId>
 									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>

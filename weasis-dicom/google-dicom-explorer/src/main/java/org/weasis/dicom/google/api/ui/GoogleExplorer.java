@@ -4,11 +4,10 @@ import org.weasis.dicom.google.api.GoogleAPIClient;
 import org.weasis.dicom.google.api.ui.dicomstore.DicomStoreSelector;
 import org.weasis.dicom.google.explorer.DownloadManager;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.BoxLayout;
+import javax.swing.Box;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.BiConsumer;
 
 import static javax.swing.BoxLayout.PAGE_AXIS;
 
@@ -17,7 +16,6 @@ public class GoogleExplorer extends JPanel {
     private final StudiesTable table;
 
     private final GoogleAPIClient googleAPIClient;
-    private final List<BiConsumer<String, String>> studySelectedListener = new ArrayList<>();
     private final DicomStoreSelector storeSelector;
 
     private final SearchPanel searchPanel;
@@ -65,7 +63,4 @@ public class GoogleExplorer extends JPanel {
                 });
     }
 
-    public void subscribeStudySelected(BiConsumer<String, String> consumer) {
-        studySelectedListener.add(consumer);
-    }
 }

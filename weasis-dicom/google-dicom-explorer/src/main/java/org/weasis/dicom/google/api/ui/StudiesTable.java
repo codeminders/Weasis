@@ -3,7 +3,10 @@ package org.weasis.dicom.google.api.ui;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.JScrollPane;
+import javax.swing.ImageIcon;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
@@ -13,6 +16,7 @@ import java.awt.event.MouseEvent;
 import java.awt.image.ImageObserver;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Vector;
 
 public class StudiesTable extends JPanel {
@@ -111,7 +115,7 @@ public class StudiesTable extends JPanel {
     
     public void showLoadIcon(String studyId) {
     	for (int i=0;i < studies.size();i++) {
-    		if (studies.get(i).getStudyId() == studyId) {
+    		if (Objects.equals(studies.get(i).getStudyId(), studyId)) {
 		    	table.setValueAt(loadIcon, i, 0);
 		    	break;
     		}
@@ -121,7 +125,7 @@ public class StudiesTable extends JPanel {
 
     public void hideLoadIcon(String studyId) {
     	for (int i=0;i < studies.size();i++) {
-    		if (studies.get(i).getStudyId() == studyId) {
+    		if (Objects.equals(studies.get(i).getStudyId(), studyId)) {
 		    	table.setValueAt(null, i, 0);
 		    	break;
     		}

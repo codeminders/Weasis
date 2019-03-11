@@ -1,6 +1,6 @@
 package org.weasis.dicom.google.api.ui.dicomstore;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.event.MouseAdapter;

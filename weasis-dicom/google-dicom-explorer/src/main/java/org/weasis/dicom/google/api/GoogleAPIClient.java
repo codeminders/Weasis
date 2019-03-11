@@ -41,7 +41,7 @@ public class GoogleAPIClient {
      * Directory to store user credentials.
      */
     private static final java.io.File DATA_STORE_DIR = new java.io.File(System.getProperty("user.home"), ".store/google_viewer_auth");
-    private static final String HEALTHCARE_API_VERSION = "v1alpha2";
+    private static final String GOOGLE_API_BASE_PATH = "https://healthcare.googleapis.com/v1alpha2";
 
     /**
      * Global instance of the {@link DataStoreFactory}. The best practice is to make
@@ -237,7 +237,7 @@ public class GoogleAPIClient {
 
     public List<org.weasis.dicom.google.api.model.Location> fetchLocations(ProjectDescriptor project) throws Exception {
         refresh();
-        String url = "https://healthcare.googleapis.com/" + HEALTHCARE_API_VERSION + "/projects/" + project.getId() + "/locations";
+        String url = GOOGLE_API_BASE_PATH + "/projects/" + project.getId() + "/locations";
         String data = googleRequest(url).parseAsString();
         JsonParser parser = new JsonParser();
         JsonElement jsonTree = parser.parse(data);
@@ -252,7 +252,7 @@ public class GoogleAPIClient {
 
     public List<Dataset> fetchDatasets(Location location) throws Exception {
         refresh();
-        String url = "https://healthcare.googleapis.com/" + HEALTHCARE_API_VERSION + "/projects/" + location.getParent().getId() + "/locations/" + location.getId() + "/datasets";
+        String url = GOOGLE_API_BASE_PATH + "/projects/" + location.getParent().getId() + "/locations/" + location.getId() + "/datasets";
         String data = googleRequest(url).parseAsString();
         JsonParser parser = new JsonParser();
         JsonElement jsonTree = parser.parse(data);
@@ -266,7 +266,7 @@ public class GoogleAPIClient {
 
     public List<DicomStore> fetchDicomstores(Dataset dataset) throws Exception {
         refresh();
-        String url = "https://healthcare.googleapis.com/" + HEALTHCARE_API_VERSION
+        String url = GOOGLE_API_BASE_PATH
                 + "/projects/" + dataset.getProject().getId()
                 + "/locations/" + dataset.getParent().getId()
                 + "/datasets/" + dataset.getName() + "/dicomStores";
@@ -283,7 +283,7 @@ public class GoogleAPIClient {
     }
 
     public static String getImageUrl(DicomStore store, String studyId) {
-        return "https://healthcare.googleapis.com/" + HEALTHCARE_API_VERSION
+        return GOOGLE_API_BASE_PATH
                 + "/projects/" + store.getProject().getId()
                 + "/locations/" + store.getLocation().getId()
                 + "/datasets/" + store.getParent().getName()

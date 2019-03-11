@@ -9,8 +9,17 @@ import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
 
-import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.BoxLayout;
+import javax.swing.Box;
+import javax.swing.BorderFactory;
+import javax.swing.JFormattedTextField;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+
 import java.awt.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -148,8 +157,7 @@ public class SearchPanel extends JPanel {
         p.put("text.month", "Month");
         p.put("text.year", "Year");
         JDatePanelImpl datePanel = new JDatePanelImpl(model, p);
-        JDatePickerImpl datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
-        return datePicker;
+        return new JDatePickerImpl(datePanel, new DateLabelFormatter());
     }
 
     private JTextField textField() {

@@ -259,7 +259,7 @@ public class DicomStoreSelector extends JPanel {
     private <T> void replaceAllExcludingItem(T selectedItem, List<T> list, DefaultComboBoxModel<Optional<T>> model) {
         List<Optional<T>> toDelete = new ArrayList<>();
         for (int i = 0; i < model.getSize(); i++) {
-            Optional<T> currentItem = (Optional<T>) model.getElementAt(i);
+            Optional<T> currentItem = model.getElementAt(i);
             if (!Objects.equals(currentItem, Optional.of(selectedItem))) {
                 toDelete.add(currentItem);
             }

@@ -4,7 +4,8 @@ import org.weasis.dicom.google.api.GoogleAPIClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
+import javax.swing.SwingWorker;
+import javax.swing.JOptionPane;
 import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractDicomSelectorTask<T> extends SwingWorker<T, Void> {

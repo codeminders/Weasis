@@ -1,10 +1,9 @@
 package org.weasis.dicom.google.api;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.dicom.google.api.model.Dataset;
-import org.weasis.dicom.google.api.model.DicomStore;
-import org.weasis.dicom.google.api.model.Location;
-import org.weasis.dicom.google.api.model.ProjectDescriptor;
+import org.weasis.dicom.google.api.model.*;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
@@ -27,12 +26,15 @@ import com.google.gson.JsonParser;
 
 import java.io.*;
 import java.net.URL;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import static org.weasis.dicom.google.api.util.StringUtils.*;
 
 public class GoogleAPIClient {
 
@@ -74,6 +76,8 @@ public class GoogleAPIClient {
     private static Oauth2 oauth2;
     private static GoogleClientSecrets clientSecrets;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
     /**
      * Instance of Google Cloud Resource Manager
      */
@@ -147,7 +151,6 @@ public class GoogleAPIClient {
                     cloudResourceManager = new CloudResourceManager.Builder(httpTransport, JSON_FACTORY, credential)
                             .build();
                     accessToken = credential.getAccessToken();
-                    GoogleAuthStub.setAuthToken(accessToken);
                     // run commands
                     tokenInfo(accessToken);
                     error = null;
@@ -285,6 +288,21 @@ public class GoogleAPIClient {
                 .collect(Collectors.toList());
     }
 
+    public List<StudyModel> fetchStudies(DicomStore store, StudyQuery query) throws Exception {
+        refresh();
+        String url = GOOGLE_API_BASE_PATH
+                + "/projects/" + store.getProject().getId()
+                + "/locations/" + store.getLocation().getId()
+                + "/datasets/" + store.getParent().getName()
+                + "/dicomStores/" + store.getName()
+                + "/dicomWeb/studies" + formatQuery(query);
+        String data = googleRequest(url).parseAsString();
+        List<StudyModel> studies = objectMapper.readValue(data, new TypeReference<List<StudyModel>>() {
+        });
+
+        return studies;
+    }
+
     public static String getImageUrl(DicomStore store, String studyId) {
         return GOOGLE_API_BASE_PATH
                 + "/projects/" + store.getProject().getId()
@@ -292,6 +310,43 @@ public class GoogleAPIClient {
                 + "/datasets/" + store.getParent().getName()
                 + "/dicomStores/" + store.getName()
                 + "/dicomWeb/studies/" + studyId;
+    }
+
+    private String formatQuery(StudyQuery query) {
+        String allItems = "?includefield=all";
+        if (query == null) {
+            return allItems;
+        }
+
+        List<String> parameters = new ArrayList<>();
+        if (isNotBlank(query.getPatientName())) {
+            parameters.add("PatientName=" + urlEncode(query.getPatientName()));
+        }
+
+        if (isNotBlank(query.getPatientId())) {
+            parameters.add("PatientID=" + urlEncode(query.getPatientId()));
+        }
+
+        if (isNotBlank(query.getAccessionNumber())) {
+            parameters.add("AccessionNumber=" + urlEncode(query.getAccessionNumber()));
+        }
+
+        if (query.getStartDate() != null && query.getEndDate() != null) {
+            parameters.add("StudyDate="
+                    + urlEncode(DATE_FORMAT.format(query.getStartDate()))
+                    + "-" + urlEncode(DATE_FORMAT.format(query.getEndDate()))
+            );
+        }
+
+        if (isNotBlank(query.getPhysicianName())) {
+            parameters.add("ReferringPhysicianName=" + urlEncode(query.getPhysicianName()));
+        }
+
+        if (parameters.isEmpty()) {
+            return allItems;
+        } else {
+            return "?" + join(parameters, "&");
+        }
     }
 
 }

@@ -1,5 +1,6 @@
 package org.weasis.dicom.google.api;
 
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.google.api.model.Dataset;
 import org.weasis.dicom.google.api.model.DicomStore;
 import org.weasis.dicom.google.api.model.Location;
@@ -41,8 +42,10 @@ public class GoogleAPIClient {
      * Directory to store user credentials.
      */
     private static final java.io.File DATA_STORE_DIR = new java.io.File(System.getProperty("user.home"), ".store/google_viewer_auth");
-    private static final String GOOGLE_API_BASE_PATH = "https://healthcare.googleapis.com/v1alpha2";
-
+    private static final String GOOGLE_API_BASE_PATH =
+            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.google.api.url", "https://healthcare.googleapis.com/v1alpha2");
+    private static final String SECRETS_FILE_NAME =
+            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.google.secrets.filename", "client_secrets.json");
     /**
      * Global instance of the {@link DataStoreFactory}. The best practice is to make
      * it a single globally shared instance across your application.
@@ -108,14 +111,14 @@ public class GoogleAPIClient {
 
         String portableDir = System.getProperty("weasis.portable.dir");
         if (portableDir != null) {
-            return new FileInputStream(portableDir + File.separator + "client_secrets.json");
+            return new FileInputStream(portableDir + File.separator + SECRETS_FILE_NAME);
         }
 
         String url = System.getProperty("weasis.codebase.url");
         if (url != null) {
-            return new URL(url + "/client_secrets.json").openStream();
+            return new URL(url + "/" + SECRETS_FILE_NAME).openStream();
         }
-        return GoogleAPIClient.class.getResource("/client_secrets.json").openStream();
+        return GoogleAPIClient.class.getResource("/" + SECRETS_FILE_NAME).openStream();
     }
 
     public String getAccessToken() {

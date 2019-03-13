@@ -1,5 +1,6 @@
 package org.weasis.dicom.google.api.ui.dicomstore;
 
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.google.api.GoogleAPIClient;
 import org.weasis.dicom.google.api.GoogleAuthStub;
 import org.weasis.dicom.google.api.model.DicomStore;
@@ -28,7 +29,8 @@ import static java.util.stream.Collectors.toList;
 public class LoadStudiesTask extends AbstractDicomSelectorTask<List<StudyView>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadStudiesTask.class);
-    private static final String GOOGLE_API_BASE_PATH = "https://healthcare.googleapis.com/v1alpha2/";
+    private static final String GOOGLE_API_BASE_PATH =
+            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.google.api.url", "https://healthcare.googleapis.com/v1alpha2");
     private static final String DICOM_WEB_STUDIES = "/dicomWeb/studies";
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -59,7 +61,8 @@ public class LoadStudiesTask extends AbstractDicomSelectorTask<List<StudyView>> 
 
     @Override
     protected List<StudyView> doInBackground() throws Exception {
-        String fullQuery = GOOGLE_API_BASE_PATH + "projects/" + store.getProject().getId()
+        String fullQuery = GOOGLE_API_BASE_PATH
+                + "/projects/" + store.getProject().getId()
                 + "/locations/" + store.getLocation().getId()
                 + "/datasets/" + store.getParent().getName()
                 + "/dicomStores/" + store.getName()

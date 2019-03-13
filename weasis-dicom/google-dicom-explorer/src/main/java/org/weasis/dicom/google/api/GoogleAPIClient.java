@@ -96,9 +96,7 @@ public class GoogleAPIClient {
         }
         if (clientSecrets.getDetails().getClientId().startsWith("Enter")
                 || clientSecrets.getDetails().getClientSecret().startsWith("Enter ")) {
-            System.out.println("Enter Client ID and Secret from https://code.google.com/apis/console/ "
-                    + "into src/main/resources/client_secrets.json");
-            System.exit(1);
+            throw new RuntimeException(SECRETS_FILE_NAME + " not found");
         }
         // set up authorization code flow
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(httpTransport, JSON_FACTORY,
@@ -185,10 +183,7 @@ public class GoogleAPIClient {
     }
 
     public boolean isAuthorized() {
-        if (DATA_STORE_DIR.exists()) {
-            return true;
-        }
-        return false;
+        return DATA_STORE_DIR.isDirectory() && DATA_STORE_DIR.list().length > 0;
     }
 
     private void deleteDir(File file) {

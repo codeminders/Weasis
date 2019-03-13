@@ -17,6 +17,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.JOptionPane;
 import javax.swing.JComboBox;
 import javax.swing.JTextField;
 import javax.swing.JList;
@@ -68,10 +69,22 @@ public class DicomStoreSelector extends JPanel {
     private final JProjectComboBox<Optional<ProjectDescriptor>> googleProjectCombobox = new JProjectComboBox<>(modelProject);
 
     private void processSignedIn(JButton googleAuthButton) {
-        googleAPIClient.signIn();
-        googleAuthButton.setText(TEXT_GOOGLE_SIGN_OUT);
-        googleAuthButton.setActionCommand(ACTION_SIGN_OUT);
-        new LoadProjectsTask(googleAPIClient, this).execute();
+        try {
+            googleAPIClient.signIn();
+            googleAuthButton.setText(TEXT_GOOGLE_SIGN_OUT);
+            googleAuthButton.setActionCommand(ACTION_SIGN_OUT);
+            new LoadProjectsTask(googleAPIClient, this).execute();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null,
+                    "Error occured on fetching google API.\n" +
+                            "Make sure you created OAuth Client ID credential \n" +
+                            "in Google Cloud console at https://console.cloud.google.com/apis/credentials \n" +
+                            "and copied your client_secrets.json to Weasis root folder.\n" +
+                            "Error message:" + ex.getCause().getMessage());
+            googleAPIClient.signOut();
+            googleAuthButton.setText(TEXT_GOOGLE_SIGN_IN);
+            googleAuthButton.setActionCommand(ACTION_SIGN_IN);
+        }
     }
 
     public DicomStoreSelector(GoogleAPIClient googleAPIClient, StudiesTable table) {

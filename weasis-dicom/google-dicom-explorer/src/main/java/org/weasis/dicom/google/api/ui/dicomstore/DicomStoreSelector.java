@@ -9,8 +9,21 @@ import org.weasis.dicom.google.api.ui.StudiesTable;
 import org.weasis.dicom.google.api.ui.StudyView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.dicom.google.explorer.Messages;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JComboBox;
+import javax.swing.JTextField;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingWorker;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.plaf.basic.BasicComboPopup;
 
@@ -34,11 +47,14 @@ public class DicomStoreSelector extends JPanel {
 
     private static final Logger log = LoggerFactory.getLogger(DicomStoreSelector.class);
 
-    private static final String TEXT_GOOGLE_SIGN_IN = "Google Sign In";
-    private static final String TEXT_GOOGLE_SIGN_OUT = "Google Sign Out";
+    private static final String TEXT_GOOGLE_SIGN_IN = Messages.getString("DicomStoreSelector.sign_in"); //$NON-NLS-1$
+    private static final String TEXT_GOOGLE_SIGN_OUT = Messages.getString("DicomStoreSelector.sign_out"); //$NON-NLS-1$
+    private static final String DEFAULT_PROJECT_COMBOBOX_TEXT = Messages.getString("DicomStoreSelector.default_project_text"); //$NON-NLS-1$
+    private static final String DEFAULT_LOCATION_COMBOBOX_TEXT = Messages.getString("DicomStoreSelector.default_location_text"); //$NON-NLS-1$
+    private static final String DEFAULT_DATASET_COMBOBOX_TEXT = Messages.getString("DicomStoreSelector.default_dataset_text"); //$NON-NLS-1$
+    private static final String DEFAULT_DICOMSTORE_COMBOBOX_TEXT = Messages.getString("DicomStoreSelector.default_dicomstore_text"); //$NON-NLS-1$
     private static final String ACTION_SIGN_IN = "signIn";
     private static final String ACTION_SIGN_OUT = "signOut";
-    private static final String DEFAULT_PROJECT_COMBOBOX_TEXT = "-- Choose or type project --";
 
     private final GoogleAPIClient googleAPIClient;
 
@@ -109,10 +125,10 @@ public class DicomStoreSelector extends JPanel {
         add(googleAuthButton);
         add(Box.createHorizontalGlue());
 
-        googleProjectCombobox.setRenderer(new ListRenderer<>(ProjectDescriptor::getName, "-- Choose project --"));
-        googleLocationCombobox.setRenderer(new ListRenderer<>(Location::getId, "-- Choose location --"));
-        googleDatasetCombobox.setRenderer(new ListRenderer<>(Dataset::getName, "-- Choose dataset --"));
-        googleDicomstoreCombobox.setRenderer(new ListRenderer<>(DicomStore::getName, "-- Choose store --"));
+        googleProjectCombobox.setRenderer(new ListRenderer<>(ProjectDescriptor::getName, DEFAULT_PROJECT_COMBOBOX_TEXT));
+        googleLocationCombobox.setRenderer(new ListRenderer<>(Location::getId, DEFAULT_LOCATION_COMBOBOX_TEXT));
+        googleDatasetCombobox.setRenderer(new ListRenderer<>(Dataset::getName, DEFAULT_DATASET_COMBOBOX_TEXT));
+        googleDicomstoreCombobox.setRenderer(new ListRenderer<>(DicomStore::getName, DEFAULT_DICOMSTORE_COMBOBOX_TEXT));
         googleProjectCombobox.setLightWeightPopupEnabled(false);
 
         googleProjectCombobox.addItemListener(this.<ProjectDescriptor>selectedListener(

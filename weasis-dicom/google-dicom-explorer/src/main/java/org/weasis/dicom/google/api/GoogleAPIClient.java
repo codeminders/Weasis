@@ -43,7 +43,7 @@ public class GoogleAPIClient {
     /**
      * Directory to store user credentials.
      */
-    private static final java.io.File DATA_STORE_DIR = new java.io.File(System.getProperty("user.home"), ".store/google_viewer_auth");
+    private static final java.io.File DATA_STORE_DIR = new java.io.File(System.getProperty("user.home"), ".weasis/google_auth");
     private static final String GOOGLE_API_BASE_PATH =
             BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.google.api.url", "https://healthcare.googleapis.com/v1alpha2");
     private static final String SECRETS_FILE_NAME =

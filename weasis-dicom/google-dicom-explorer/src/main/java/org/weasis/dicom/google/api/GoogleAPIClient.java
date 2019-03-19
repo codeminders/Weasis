@@ -68,10 +68,9 @@ public class GoogleAPIClient {
      * OAuth 2.0 scopes.
      */
     private static final List<String> SCOPES = Arrays.asList(
-            "https://www.googleapis.com/auth/cloud-healthcare",
-            "https://www.googleapis.com/auth/cloud-platform",
-            "https://www.googleapis.com/auth/userinfo.profile",
-            "https://www.googleapis.com/auth/userinfo.email");
+    		"https://www.googleapis.com/auth/cloud-healthcare",
+    		"https://www.googleapis.com/auth/cloudplatformprojects.readonly"
+    		);
 
     private static Oauth2 oauth2;
     private static GoogleClientSecrets clientSecrets;
@@ -155,7 +154,6 @@ public class GoogleAPIClient {
                     isSignedIn = true;
                 } catch (Exception e) {
                     error = e;
-                    e.printStackTrace();
                 }
             } while (!isSignedIn && tryCount < 4);
             if (error != null) {

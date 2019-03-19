@@ -67,11 +67,17 @@ public class LoadStudiesTask extends AbstractDicomSelectorTask<List<StudyView>> 
             try {
                 view.setStudyDate(model.getStudyDate().getFirstValue().map(s -> LocalDate.parse(s, DATE_FORMAT)).orElse(null));
             } catch (Exception e) {
-                view.setStudyDate(model.getStudyDate().getFirstValue().map(s -> LocalDate.parse(s, DateTimeFormatter.ofPattern("yyyy.MM.dd"))).orElse(null));
+                try {
+                    view.setStudyDate(model.getStudyDate().getFirstValue().map(s -> LocalDate.parse(s, DateTimeFormatter.ofPattern("yyyy.MM.dd"))).orElse(null));
+                } catch (Exception ignored) {
+                }
             }
         }
         if (model.getStudyTime() != null) {
-            view.setStudyTime(model.getStudyTime().getFirstValue().map(s -> LocalTime.parse(s, TIME_FORMAT)).orElse(null));
+            try {
+                view.setStudyTime(model.getStudyTime().getFirstValue().map(s -> LocalTime.parse(s, TIME_FORMAT)).orElse(null));
+            } catch (Exception ignored) {
+            }
         }
         if (model.getStudyDescription() != null) {
             view.setDescription(model.getStudyDescription().getFirstValue().orElse(""));
@@ -86,7 +92,10 @@ public class LoadStudiesTask extends AbstractDicomSelectorTask<List<StudyView>> 
             view.setLocation(model.getLocation().getFirstValue().map(StudyModel.Value::getAlphabetic).orElse(""));
         }
         if (model.getBirthDate() != null) {
-            view.setBirthDate(model.getBirthDate().getFirstValue().map(s -> LocalDate.parse(s, DATE_FORMAT)).orElse(null));
+            try {
+                view.setBirthDate(model.getBirthDate().getFirstValue().map(s -> LocalDate.parse(s, DATE_FORMAT)).orElse(null));
+            } catch (Exception ignored) {
+            }
         }
 
         return view;

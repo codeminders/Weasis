@@ -24,8 +24,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
-import java.io.*;
-import java.net.URL;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,10 +43,11 @@ public class GoogleAPIClient {
 
     private static final String APPLICATION_NAME = "Weasis-GoogleDICOMExplorer/1.0";
 
+    private static final java.io.File USER_HOME_DIR = new java.io.File(BundleTools.SYSTEM_PREFERENCES.getProperty("user.home"));
     /**
      * Directory to store user credentials.
      */
-    private static final java.io.File DATA_STORE_DIR = new java.io.File(System.getProperty("user.home"), ".weasis/google_auth");
+    private static final java.io.File DATA_STORE_DIR = new java.io.File(USER_HOME_DIR, ".weasis/google_auth");
     private static final String GOOGLE_API_BASE_PATH =
             BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.google.api.url", "https://healthcare.googleapis.com/v1alpha2");
     private static final String SECRETS_FILE_NAME =
@@ -105,21 +109,7 @@ public class GoogleAPIClient {
     }
 
     private static InputStream getSecret() throws IOException {
-        String file = System.getProperty("google.client.secret");
-        if (file != null) {
-            return new FileInputStream(file);
-        }
-
-        String portableDir = System.getProperty("weasis.portable.dir");
-        if (portableDir != null) {
-            return new FileInputStream(portableDir + File.separator + SECRETS_FILE_NAME);
-        }
-
-        String url = System.getProperty("weasis.codebase.url");
-        if (url != null) {
-            return new URL(url + "/" + SECRETS_FILE_NAME).openStream();
-        }
-        return GoogleAPIClient.class.getResource("/" + SECRETS_FILE_NAME).openStream();
+        return new FileInputStream(USER_HOME_DIR + "/.weasis/"+ SECRETS_FILE_NAME);
     }
 
     public String getAccessToken() {

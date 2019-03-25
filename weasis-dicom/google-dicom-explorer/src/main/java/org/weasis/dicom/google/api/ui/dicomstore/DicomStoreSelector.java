@@ -79,7 +79,7 @@ public class DicomStoreSelector extends JPanel {
                     "Error occured on fetching google API.\n" +
                             "Make sure you created OAuth Client ID credential \n" +
                             "in Google Cloud console at https://console.cloud.google.com/apis/credentials \n" +
-                            "and copied your client_secrets.json to Weasis root folder.\n" +
+                            "and copied your client_secrets.json to $USER_HOME/.weasis folder.\n" +
                             "Error message:" + ex.getCause().getMessage());
             googleAPIClient.signOut();
             googleAuthButton.setText(TEXT_GOOGLE_SIGN_IN);

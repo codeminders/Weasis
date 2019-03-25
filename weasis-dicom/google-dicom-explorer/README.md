@@ -39,7 +39,7 @@ mvn clean package -Dportable=true
 cd target/portable-dist
 unzip weasis-portable.zip
 ```
-* Copy **_client_secrets.json_** file to target/portable-dist folder (next to viewer-win32.exe and viewer-linux.sh)
+* Copy **_client_secrets.json_** file to $USER_HOME/.weasis folder
 * Run Weasis Viewer executable
 * Switch to **_Google Dicom Explorer_** tab and login using your Google Account
 * Explore your DICOM data
